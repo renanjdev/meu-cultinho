@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "911409066968",
+    "project_id": "meu-cultinho",
+    "storage_bucket": "meu-cultinho.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:911409066968:android:32d91d8970e5c7af5a38ad",
+        "android_client_info": {
+          "package_name": "com.meucultinho.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC17BGSbzgii1ifqQ24NmKXO1uy-us4GeY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,52 @@
+/** 8. Lista de Auxiliares — search + roster of helpers. */
+import React, { useState } from 'react';
+import { View } from 'react-native';
+import { useTheme } from '../theme/ThemeProvider';
+import { useNav } from '../navigation/useNav';
+import { AUX } from '../data/seed';
+import { AppBar, Avatar, CardRow, Chip, Fab, Screen, ScreenScroll, SearchBar, StatusChip, Txt } from '../components/ui';
+import { IconWhats } from '../components/Icons';
+
+export default function AuxList() {
+  const t = useTheme();
+  const { go, back } = useNav();
+  const [q, setQ] = useState('');
+  const list = AUX.filter((a) => a.name.toLowerCase().includes(q.toLowerCase()));
+
+  return (
+    <Screen>
+      <AppBar title="Auxiliares" sub={`${AUX.length} cadastrados`} onBack={back} />
+      <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 12, backgroundColor: t.surface, borderBottomWidth: 1, borderBottomColor: t.line }}>
+        <SearchBar value={q} onChange={setQ} placeholder="Buscar auxiliar..." />
+      </View>
+
+      <ScreenScroll contentStyle={{ paddingBottom: 96 }}>
+        {list.map((a) => (
+          <CardRow key={a.id} onPress={() => go('AuxForm')}>
+            <Avatar name={a.name} size={48} />
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+                <Txt weight="bold" size={15}>
+                  {a.name}
+                </Txt>
+                {a.role === 'Administrador' ? <Chip tone="gold">Admin</Chip> : null}
+              </View>
+              <Txt weight="semibold" size={12.5} color={t.inkSoft} style={{ marginTop: 1 }}>
+                {a.group}
+              </Txt>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 5 }}>
+                <IconWhats size={14} color={t.inkSoft} />
+                <Txt weight="semibold" size={12.5} color={t.inkSoft}>
+                  {a.phone}
+                </Txt>
+              </View>
+            </View>
+            <StatusChip kind={a.status} />
+          </CardRow>
+        ))}
+      </ScreenScroll>
+
+      <Fab label="Novo Auxiliar" onPress={() => go('AuxForm')} />
+    </Screen>
+  );
+}

@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Meu Cultinho",
+    "slug": "meu-cultinho",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.meucultinho.app",
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-font",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "expo-build-properties",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O app usa suas fotos para definir a imagem do membro.",
+          "cameraPermission": "O app usa a câmera para tirar a foto do membro."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "e6c9facd-17f4-4c5d-8633-a6aeed596d34"
+      }
+    },
+    "owner": "renanjjanuario"
+  }
+}

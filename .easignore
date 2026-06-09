@@ -1,0 +1,15 @@
+# Exclude everything not needed by the EAS Build upload.
+# node_modules is reinstalled in the cloud from package-lock.json.
+node_modules/
+.expo/
+dist/
+dist-verify/
+web-build/
+/android
+/ios
+.git/
+.kotlin/
+*.log
+*.tsbuildinfo
+.metro-health-check*
+.DS_Store
