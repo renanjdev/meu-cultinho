@@ -21,17 +21,24 @@ export default function AuxList() {
       </View>
 
       <ScreenScroll contentStyle={{ paddingBottom: 96 }}>
+        {list.length === 0 ? (
+          <Txt color={t.inkSoft} style={{ paddingVertical: 30, textAlign: 'center' }}>
+            Nenhum auxiliar encontrado.
+          </Txt>
+        ) : null}
         {list.map((a) => (
-          <CardRow key={a.id} onPress={() => go('AuxForm')}>
+          <CardRow key={a.id} accessibilityLabel={a.name + ', ' + a.group + ', ' + a.status} onPress={() => go('AuxForm')}>
             <Avatar name={a.name} size={48} />
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
-                <Txt weight="bold" size={15}>
-                  {a.name}
-                </Txt>
+                <View style={{ flex: 1 }}>
+                  <Txt weight="bold" size={15} numberOfLines={1}>
+                    {a.name}
+                  </Txt>
+                </View>
                 {a.role === 'Administrador' ? <Chip tone="gold">Admin</Chip> : null}
               </View>
-              <Txt weight="semibold" size={12.5} color={t.inkSoft} style={{ marginTop: 1 }}>
+              <Txt weight="semibold" size={12.5} color={t.inkSoft} style={{ marginTop: 1 }} numberOfLines={1}>
                 {a.group}
               </Txt>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 5 }}>

@@ -39,7 +39,11 @@ export default function SplashScreen() {
   const insets = useSafeAreaInsets();
   const { go } = useNav();
   return (
-    <Pressable onPress={() => go('Login')} style={{ flex: 1 }}>
+    <Pressable
+      onPress={() => go('Login')}
+      accessibilityRole="button"
+      accessibilityLabel="Toque para continuar"
+      style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.92 : 1 })}>
       <LinearGradient
         colors={t.gradientSplash}
         start={{ x: 0.2, y: 0 }}
@@ -53,7 +57,7 @@ export default function SplashScreen() {
         }}>
         <View style={{ flex: 1 }} />
         <LogoMark size={104} />
-        <Txt weight="bold" style={{ fontSize: 34, marginTop: 26 }}>
+        <Txt weight="bold" numberOfLines={1} style={{ fontSize: 34, marginTop: 26 }}>
           Meu Cultinho
         </Txt>
         <Txt
@@ -64,12 +68,15 @@ export default function SplashScreen() {
           Cuidado e organização para a reunião de jovens e menores
         </Txt>
         <View style={{ flex: 1 }} />
-        <View style={{ flexDirection: 'row', gap: 7, marginBottom: 18 }}>
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={{ flexDirection: 'row', gap: 7, marginBottom: 18 }}>
           <Dot delay={0} />
           <Dot delay={200} />
           <Dot delay={400} />
         </View>
-        <Txt weight="semibold" size={13} color={t.inkFaint} style={{ marginBottom: 8 }}>
+        <Txt weight="semibold" size={13} color={t.inkSoft} style={{ marginBottom: 8 }}>
           Toque para continuar
         </Txt>
       </LinearGradient>

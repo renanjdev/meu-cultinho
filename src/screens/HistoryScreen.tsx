@@ -22,6 +22,15 @@ export default function HistoryScreen() {
   const { go, back } = useNav();
   const [grp, setGrp] = useState('all');
 
+  const groupOptions = [
+    { value: 'all', label: 'Todos os grupos' },
+    { value: 'g5', label: 'Moços' },
+    { value: 'g6', label: 'Moças' },
+    { value: 'g3', label: 'Meninos até 12' },
+  ];
+  const selectedLabel = groupOptions.find((o) => o.value === grp)?.label;
+  const rows = grp === 'all' ? HISTORY : HISTORY.filter((h) => h.group === selectedLabel);
+
   return (
     <Screen>
       <AppBar title="Histórico de Frequência" onBack={back} />
@@ -34,20 +43,16 @@ export default function HistoryScreen() {
             <Field label="Data final" value="08/06/2025" editable={false} icon={<IconCalendar size={16} />} />
           </View>
         </View>
-        <FilterChips
-          value={grp}
-          onChange={setGrp}
-          options={[
-            { value: 'all', label: 'Todos os grupos' },
-            { value: 'g5', label: 'Moços' },
-            { value: 'g6', label: 'Moças' },
-            { value: 'g3', label: 'Meninos até 12' },
-          ]}
-        />
+        <FilterChips value={grp} onChange={setGrp} options={groupOptions} />
       </View>
 
       <ScreenScroll contentStyle={{ paddingBottom: 24 }}>
-        {HISTORY.map((h) => {
+        {rows.length === 0 ? (
+          <Txt color={t.inkSoft} style={{ paddingVertical: 30, textAlign: 'center' }}>
+            Nenhum registro neste período.
+          </Txt>
+        ) : (
+          rows.map((h) => {
           const tone: 'present' | 'gold' | 'absent' = h.freq >= 85 ? 'present' : h.freq >= 70 ? 'gold' : 'absent';
           const barColor = tone === 'present' ? t.present : tone === 'gold' ? t.gold : t.absent;
           const [day, month] = h.date.split(' ');
@@ -58,6 +63,7 @@ export default function HistoryScreen() {
                   style={{
                     width: 48,
                     height: 48,
+                    flexShrink: 0,
                     borderRadius: 14,
                     backgroundColor: t.primarySoft,
                     alignItems: 'center',
@@ -71,7 +77,7 @@ export default function HistoryScreen() {
                   </Txt>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Txt weight="bold" size={14.5}>
+                  <Txt weight="bold" size={14.5} numberOfLines={1}>
                     {h.group}
                   </Txt>
                   <Txt weight="semibold" size={12.5} color={t.inkSoft}>
@@ -98,8 +104,9 @@ export default function HistoryScreen() {
                 <ProgressBar value={h.freq} color={barColor} />
               </View>
             </CardRow>
-          );
-        })}
+            );
+          })
+        )}
       </ScreenScroll>
     </Screen>
   );

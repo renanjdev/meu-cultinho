@@ -25,11 +25,13 @@ import {
   Txt,
 } from '../components/ui';
 import { IconCalendar, IconCheck, IconNote } from '../components/Icons';
+import { useToast } from '../components/Toast';
 
 type Mark = 'present' | 'absent';
 
 export default function Attendance() {
   const t = useTheme();
+  const { show } = useToast();
   const insets = useSafeAreaInsets();
   const { go, back } = useNav();
   const route = useRoute<RouteProp<RootStackParamList, 'Attendance'>>();
@@ -77,7 +79,7 @@ export default function Attendance() {
             <Card key={j.id} pad style={cardStyle}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <Avatar name={j.name} size={46} />
-                <View style={{ flex: 1 }}>
+                <View style={{ flex: 1, minWidth: 0 }}>
                   <Txt weight="bold" size={15} numberOfLines={1}>
                     {j.name}
                   </Txt>
@@ -85,7 +87,10 @@ export default function Attendance() {
                     {j.age} anos
                   </Txt>
                 </View>
-                <IconButton style={{ width: 38, height: 38, backgroundColor: t.surface2 }}>
+                <IconButton
+                  accessibilityLabel="Observação"
+                  onPress={() => show('Em breve')}
+                  style={{ width: 44, height: 44, backgroundColor: t.surface2 }}>
                   <IconNote size={18} color={t.inkSoft} />
                 </IconButton>
               </View>

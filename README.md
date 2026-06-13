@@ -7,26 +7,30 @@ Implementado em **React Native (Expo + TypeScript)** a partir do protótipo de
 design exportado do Claude Design. Esta etapa é **somente front-end**: dados
 fictícios, sem backend, banco de dados ou autenticação real.
 
-## Como rodar
+## Como rodar (web app)
 
-As dependências já estão instaladas. Para abrir no seu celular Android:
+Este é um **web app** (react-native-web/Expo) — acessado pelo navegador no
+celular (Android/iPhone) ou no desktop. As dependências já estão instaladas.
 
-```bash
-npx expo start
-```
-
-Leia o QR Code com o app **Expo Go** (Play Store). Ou, com um emulador Android
-aberto:
+Desenvolvimento:
 
 ```bash
-npm run android
+npm run web          # expo start --web (Metro) → http://localhost:8081
 ```
 
-Para gerar um APK/AAB instalável, use o EAS Build:
+Build de produção (estático) para deploy na Vercel/Netlify/etc.:
 
 ```bash
-npx eas build -p android
+npx expo export -p web   # gera a pasta dist/
 ```
+
+> **Backend (Fase 1, adiada):** login real, Firestore, fotos e fila offline
+> estão esboçados em `src/services/`, `src/repositories/`, `src/hooks/useAuth.ts`
+> e `src/data/seedFirestore.ts`. Esses módulos usam `@react-native-firebase`
+> (nativo, **não roda no navegador**) e por isso ficam **fora do caminho de
+> execução** do web app — o protótipo navega por papel (Admin/Auxiliar) com
+> dados mock. Para reativar o backend no web, migrar para o **Firebase JS SDK**
+> (pacote `firebase`).
 
 ## Estrutura
 
@@ -34,7 +38,7 @@ npx eas build -p android
 App.tsx                 raiz: carrega fontes, providers e o navegador
 src/
   theme/
-    tokens.ts           os 3 temas (Sereno / Jardim / Aconchego) como objetos
+    tokens.ts           tokens da identidade visual (Aconchego) como objeto
     ThemeProvider.tsx   contexto de tema + papel (admin/auxiliar)
   data/seed.ts          dados fictícios (grupos, jovens, auxiliares, histórico)
   state/youthStore.ts   store reativo (cadastrar / excluir jovem)
@@ -54,17 +58,14 @@ Configurações.
 
 ## Identidade visual
 
-Três temas trocáveis ao vivo em **Configurações → Identidade visual**:
-
-- **Sereno** — azul suave (padrão), fonte Nunito
-- **Jardim** — verde-água + dourado, fonte Quicksand
-- **Aconchego** — índigo acolhedor, fonte Fredoka
+Identidade única **Aconchego** — índigo acolhedor (#5b6ce0), cantos bem
+arredondados e fonte **Fredoka**. Verde suave = presente, vermelho suave =
+falta, dourado = destaque/pendente; fundo cinza muito claro, texto cinza-escuro.
 
 ## O que funciona de verdade no protótipo
 
 - Navegação completa entre as 15 telas, com fluxo distinto para Admin e Auxiliar
 - Cadastrar e excluir jovem (a lista atualiza na hora)
 - Registrar frequência: cada card fica verde (presente) ou vermelho (falta)
-- Troca de tema em tempo real
 
 Datas, relatórios e gráficos são representações visuais com dados fictícios.

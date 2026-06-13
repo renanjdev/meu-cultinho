@@ -28,17 +28,26 @@ import {
 export default function YouthForm() {
   const { go, back } = useNav();
   const [f, setF] = useState<Partial<Youth>>({ sex: 'Masculino', status: 'Ativo', group: 'g1' });
+  const [triedSave, setTriedSave] = useState(false);
   const set = (k: keyof Youth) => (v: string) => setF((s) => ({ ...s, [k]: v }));
+  const trimmedName = f.name?.trim() ?? '';
+  const nameMissing = trimmedName.length === 0;
 
   return (
     <Screen>
       <AppBar title="Cadastrar Jovem" onBack={back} />
       <ScreenScroll contentStyle={{ paddingBottom: 24 }}>
         <FieldSection icon={<IconUser size={16} />}>Dados pessoais</FieldSection>
-        <Field label="Nome completo" placeholder="Ex: João Miguel Soares" value={f.name} onChangeText={set('name')} />
+        <Field
+          label="Nome completo"
+          placeholder="Ex: João Miguel Soares"
+          value={f.name}
+          onChangeText={set('name')}
+          error={triedSave && nameMissing ? 'Informe o nome' : undefined}
+        />
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <View style={{ flex: 1 }}>
-            <Field label="Data de nascimento" placeholder="dd/mm/aaaa" value={f.birth} onChangeText={set('birth')} icon={<IconCalendar size={17} />} />
+            <Field label="Data de nascimento" placeholder="dd/mm/aaaa" value={f.birth} onChangeText={set('birth')} keyboardType="number-pad" icon={<IconCalendar size={17} />} />
           </View>
           <View style={{ flex: 1 }}>
             <Segmented label="Sexo" value={f.sex} options={['Masculino', 'Feminino']} onChange={set('sex')} />
@@ -61,7 +70,11 @@ export default function YouthForm() {
           variant="primary"
           icon={<IconCheck size={19} />}
           onPress={() => {
-            addYouth({ ...f, name: f.name?.trim() || 'Novo jovem' });
+            if (nameMissing) {
+              setTriedSave(true);
+              return;
+            }
+            addYouth({ ...f, name: trimmedName });
             go('YouthList');
           }}>
           Salvar jovem

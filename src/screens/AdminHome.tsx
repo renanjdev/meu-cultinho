@@ -1,7 +1,8 @@
 /** 3. Home Admin — dashboard: summary, quick actions, today's groups. */
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View } from 'react-native';
-import { useTheme } from '../theme/ThemeProvider';
+import { useApp, useTheme } from '../theme/ThemeProvider';
+import { useToast } from '../components/Toast';
 import { useNav } from '../navigation/useNav';
 import { GROUPS } from '../data/seed';
 import type { RouteName } from '../navigation/types';
@@ -63,7 +64,11 @@ const ACTIONS: ActionItem[] = [
 
 export default function AdminHome() {
   const t = useTheme();
+  const { show } = useToast();
+  const { setRole } = useApp();
   const { go } = useNav();
+
+  useEffect(() => setRole('admin'), [setRole]);
 
   return (
     <Screen>
@@ -88,7 +93,7 @@ export default function AdminHome() {
             Resumo geral do Meu Cultinho
           </Txt>
         </View>
-        <IconButton soft>
+        <IconButton soft accessibilityLabel="Notificações" onPress={() => show('Em breve')}>
           <IconBell size={21} color={t.primary} />
         </IconButton>
       </View>
@@ -123,19 +128,20 @@ export default function AdminHome() {
                   borderRadius: 14,
                   alignItems: 'center',
                   justifyContent: 'center',
+                  flexShrink: 0,
                   backgroundColor: a.primary ? 'rgba(255,255,255,0.18)' : t.primarySoft,
                 }}>
-                <a.Icon size={a.primary ? 22 : 20} color={a.primary ? '#fff' : t.primary} />
+                <a.Icon size={a.primary ? 22 : 20} color={a.primary ? t.onPrimary : t.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Txt weight="bold" size={15.5} color={a.primary ? '#fff' : t.ink}>
+                <Txt weight="bold" size={15.5} color={a.primary ? t.onPrimary : t.ink}>
                   {a.label}
                 </Txt>
                 <Txt weight="semibold" size={12.5} color={a.primary ? 'rgba(255,255,255,0.88)' : t.inkSoft}>
                   {a.sub}
                 </Txt>
               </View>
-              <IconChevR size={20} color={a.primary ? '#fff' : t.ink} opacity={0.5} />
+              <IconChevR size={20} color={a.primary ? t.onPrimary : t.ink} opacity={0.5} />
             </CardRow>
           ))}
         </View>
@@ -150,7 +156,7 @@ export default function AdminHome() {
                 <Txt weight="bold" size={14.5} numberOfLines={1}>
                   {g.name}
                 </Txt>
-                <Txt weight="semibold" size={12.5} color={t.inkSoft}>
+                <Txt weight="semibold" size={12.5} color={t.inkSoft} numberOfLines={1}>
                   {g.count} jovens · {g.aux}
                 </Txt>
               </View>

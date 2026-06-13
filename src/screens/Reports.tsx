@@ -3,6 +3,7 @@ import React, { type ReactNode } from 'react';
 import { View } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useNav } from '../navigation/useNav';
+import { useToast } from '../components/Toast';
 import {
   AppBar,
   BottomNav,
@@ -35,8 +36,8 @@ const BY_GROUP = [
   { name: 'Meninas até 12', v: 88 },
   { name: 'Moços', v: 71 },
   { name: 'Meninos até 12', v: 76 },
-  { name: 'Meninas (ñ leem)', v: 90 },
-  { name: 'Meninos (ñ leem)', v: 83 },
+  { name: 'Meninas (não leem)', v: 90 },
+  { name: 'Meninos (não leem)', v: 83 },
 ];
 
 function RankCard({
@@ -52,6 +53,7 @@ function RankCard({
 }) {
   const t = useTheme();
   const fg = tone === 'present' ? t.present : t.absent;
+  const fgDeep = tone === 'present' ? t.presentDeep : t.absentDeep;
   const bg = tone === 'present' ? t.presentSoft : t.absentSoft;
   return (
     <Card pad style={{ flex: 1 }}>
@@ -59,7 +61,7 @@ function RankCard({
         <View style={{ width: 26, height: 26, borderRadius: 9, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
           {icon}
         </View>
-        <Txt weight="bold" size={13} color={fg}>
+        <Txt weight="bold" size={13} color={fgDeep}>
           {title}
         </Txt>
       </View>
@@ -69,7 +71,7 @@ function RankCard({
             <Txt weight="semibold" size={12.5} numberOfLines={1} style={{ flex: 1, marginRight: 6 }}>
               {name}
             </Txt>
-            <Txt weight="bold" size={12.5} color={fg}>
+            <Txt weight="bold" size={12.5} color={fgDeep}>
               {val}
             </Txt>
           </View>
@@ -82,6 +84,7 @@ function RankCard({
 export default function Reports() {
   const t = useTheme();
   const { go } = useNav();
+  const { show } = useToast();
   const stat = (size: number): IconProps => ({ size });
 
   return (
@@ -90,7 +93,7 @@ export default function Reports() {
         title="Relatórios"
         sub="Maio · Todos os grupos"
         right={
-          <IconButton soft>
+          <IconButton soft accessibilityLabel="Filtrar relatório" onPress={() => show('Em breve')}>
             <IconFilter size={19} color={t.primary} />
           </IconButton>
         }
@@ -112,7 +115,7 @@ export default function Reports() {
           {BY_GROUP.map((g) => (
             <View key={g.name}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                <Txt weight="bold" size={13}>
+                <Txt weight="bold" size={13} numberOfLines={1} style={{ flex: 1, marginRight: 8 }}>
                   {g.name}
                 </Txt>
                 <Txt weight="bold" size={13} color={t.inkSoft}>

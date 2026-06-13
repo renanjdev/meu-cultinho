@@ -2,10 +2,11 @@
   "name": "cultinho",
   "version": "1.0.0",
   "main": "index.ts",
+  "engines": {
+    "node": "22.x"
+  },
   "dependencies": {
     "@expo-google-fonts/fredoka": "^0.4.1",
-    "@expo-google-fonts/nunito": "^0.4.2",
-    "@expo-google-fonts/quicksand": "^0.4.1",
     "@expo/metro-runtime": "~56.0.14",
     "@react-native-community/netinfo": "12.0.1",
     "@react-native-firebase/app": "^24.1.0",

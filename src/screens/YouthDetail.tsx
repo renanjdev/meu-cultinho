@@ -1,6 +1,6 @@
 /** 7. Detalhes do Jovem — hero, stats, guardian info, recent history, delete. */
 import React, { useState } from 'react';
-import { View } from 'react-native';
+import { Linking, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRoute, type RouteProp } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
@@ -54,7 +54,7 @@ export default function YouthDetail() {
         title="Detalhes do Jovem"
         onBack={back}
         right={
-          <IconButton soft onPress={() => go('YouthForm', { id: j.id })}>
+          <IconButton soft accessibilityLabel="Editar" onPress={() => go('YouthForm', { id: j.id })}>
             <IconEdit size={19} color={t.primary} />
           </IconButton>
         }
@@ -70,7 +70,7 @@ export default function YouthDetail() {
           <Txt weight="bold" size={21} style={{ marginTop: 14, marginBottom: 3, textAlign: 'center' }}>
             {j.name}
           </Txt>
-          <Txt weight="semibold" size={13.5} color={t.inkSoft}>
+          <Txt weight="semibold" size={13.5} color={t.inkSoft} numberOfLines={1}>
             {j.age} anos · {groupName(j.group)}
           </Txt>
           <View style={{ marginTop: 10 }}>
@@ -97,7 +97,10 @@ export default function YouthDetail() {
               label="WhatsApp"
               value={j.phone}
               action={
-                <Button sm variant="secondary">
+                <Button
+                  sm
+                  variant="secondary"
+                  onPress={() => Linking.openURL('https://wa.me/55' + j.phone.replace(/\D/g, ''))}>
                   Chamar
                 </Button>
               }
@@ -126,7 +129,7 @@ export default function YouthDetail() {
               Editar
             </Button>
             <Button variant="primary" icon={<IconClock size={18} />} style={{ flex: 1 }} onPress={() => go('History')}>
-              Histórico completo
+              Histórico
             </Button>
           </View>
           <Button variant="danger-soft" icon={<IconX size={18} />} onPress={() => setConfirm(true)}>

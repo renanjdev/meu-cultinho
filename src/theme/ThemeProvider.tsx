@@ -1,9 +1,13 @@
 /**
- * theme/ThemeProvider.tsx — app-wide theme context.
+ * theme/ThemeProvider.tsx — app-wide theme + role context.
  *
- * Replaces the prototype's [data-theme] attribute. The Tweaks panel from the
- * design tool is gone; theme selection now lives in the Configurações screen.
- * The signed-in user's role is provided by `useAuth`, not this context.
+ * Replaces the prototype's [data-theme] attribute. The app ships a single
+ * visual identity (Aconchego), so there is no theme switching.
+ *
+ * This is a front-end-only prototype (web app, mock data), so the user's role
+ * is plain client state set at login — mirroring the prototype's go() that set
+ * the role when navigating to a home. Real auth (Firebase) is deferred to a
+ * later phase and intentionally kept out of the runtime path.
  */
 import React, {
   createContext,
@@ -12,22 +16,27 @@ import React, {
   useState,
   type ReactNode,
 } from 'react';
-import { DEFAULT_THEME, THEMES, type Theme, type ThemeName } from './tokens';
+import { DEFAULT_THEME, THEMES, type Theme } from './tokens';
+
+export type Role = 'admin' | 'auxiliar';
 
 interface AppContextValue {
   theme: Theme;
-  themeName: ThemeName;
-  setThemeName: (name: ThemeName) => void;
+  role: Role;
+  setRole: (role: Role) => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
 
+// Single shipped identity (Aconchego) — resolved once.
+const THEME = THEMES[DEFAULT_THEME];
+
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [themeName, setThemeName] = useState<ThemeName>(DEFAULT_THEME);
+  const [role, setRole] = useState<Role>('admin');
 
   const value = useMemo<AppContextValue>(
-    () => ({ theme: THEMES[themeName], themeName, setThemeName }),
-    [themeName],
+    () => ({ theme: THEME, role, setRole }),
+    [role],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

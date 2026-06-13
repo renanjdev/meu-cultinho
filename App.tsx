@@ -11,18 +11,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import {
-  Nunito_400Regular,
-  Nunito_600SemiBold,
-  Nunito_700Bold,
-  Nunito_800ExtraBold,
-} from '@expo-google-fonts/nunito';
-import {
-  Quicksand_400Regular,
-  Quicksand_500Medium,
-  Quicksand_600SemiBold,
-  Quicksand_700Bold,
-} from '@expo-google-fonts/quicksand';
-import {
   Fredoka_400Regular,
   Fredoka_500Medium,
   Fredoka_600SemiBold,
@@ -30,7 +18,7 @@ import {
 } from '@expo-google-fonts/fredoka';
 
 import { AppProvider, useTheme } from './src/theme/ThemeProvider';
-import { useAuth, type Session } from './src/hooks/useAuth';
+import { ToastProvider } from './src/components/Toast';
 import { LogoMark } from './src/components/ui';
 import type { RootStackParamList } from './src/navigation/types';
 
@@ -92,7 +80,10 @@ function appScreens() {
   );
 }
 
-function AuthNavigator() {
+// One native-stack navigator holds the whole prototype: Splash → Login → the
+// 13 in-app screens. Login navigates to a home by role (no real auth); see
+// LoginScreen and the role state in ThemeProvider.
+function RootNavigator() {
   const t = useTheme();
   const navTheme = useNavTheme();
   return (
@@ -102,31 +93,10 @@ function AuthNavigator() {
         screenOptions={{ headerShown: false, animation: 'slide_from_right', contentStyle: { backgroundColor: t.bg } }}>
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
-}
-
-function AppNavigator({ role }: { role: Session['role'] }) {
-  const t = useTheme();
-  const navTheme = useNavTheme();
-  return (
-    <NavigationContainer theme={navTheme}>
-      <Stack.Navigator
-        initialRouteName={role === 'admin' ? 'AdminHome' : 'AuxHome'}
-        screenOptions={{ headerShown: false, animation: 'slide_from_right', contentStyle: { backgroundColor: t.bg } }}>
         {appScreens()}
       </Stack.Navigator>
     </NavigationContainer>
   );
-}
-
-// Auth gate: decides which navigator to mount based on the Firebase session.
-function Gate() {
-  const { session, loading } = useAuth();
-  if (loading) return <BootScreen />;
-  if (!session) return <AuthNavigator />;
-  return <AppNavigator role={session.role} />;
 }
 
 /**
@@ -139,23 +109,18 @@ function AppFrame({ children }: { children: ReactNode }) {
 }
 
 function WebPhoneFrame({ children }: { children: ReactNode }) {
-  const { width, height } = useWindowDimensions();
-  // Keep a fixed 412x892 layout (so nothing reflows) and scale it to fit, the
-  // same device-scaling the prototype used.
-  const scale = Math.min(1, (width - 24) / 412, (height - 24) / 892);
+  const { width } = useWindowDimensions();
+
+  // Phone browsers (the primary target): fill the viewport.
+  if (width < 600) {
+    return <View style={{ flex: 1 }}>{children}</View>;
+  }
+
+  // Desktop / tablet: center a phone-width column. No transform and no fixed
+  // height — it flexes to any viewport, so it can never clip or mis-scale.
   return (
-    <View style={{ flex: 1, backgroundColor: '#e7ebf2', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-      <View
-        style={{
-          width: 412,
-          height: 892,
-          transform: [{ scale }],
-          borderRadius: 40,
-          borderWidth: 10,
-          borderColor: '#11181f',
-          overflow: 'hidden',
-          backgroundColor: '#fff',
-        }}>
+    <View style={{ flex: 1, backgroundColor: '#e7ebf2', alignItems: 'center' }}>
+      <View style={{ flex: 1, width: 440, maxWidth: '100%', backgroundColor: '#fff', overflow: 'hidden' }}>
         {children}
       </View>
     </View>
@@ -164,14 +129,6 @@ function WebPhoneFrame({ children }: { children: ReactNode }) {
 
 export default function App() {
   const [fontsLoaded, fontError] = useFonts({
-    Nunito_400Regular,
-    Nunito_600SemiBold,
-    Nunito_700Bold,
-    Nunito_800ExtraBold,
-    Quicksand_400Regular,
-    Quicksand_500Medium,
-    Quicksand_600SemiBold,
-    Quicksand_700Bold,
     Fredoka_400Regular,
     Fredoka_500Medium,
     Fredoka_600SemiBold,
@@ -184,7 +141,7 @@ export default function App() {
       <SafeAreaProvider>
         <AppProvider>
           <StatusBar style="dark" />
-          {ready ? <Gate /> : <BootScreen />}
+          <ToastProvider>{ready ? <RootNavigator /> : <BootScreen />}</ToastProvider>
         </AppProvider>
       </SafeAreaProvider>
     </AppFrame>

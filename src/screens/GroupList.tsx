@@ -16,7 +16,7 @@ import {
   StatusChip,
   Txt,
 } from '../components/ui';
-import { IconCheckCircle, IconClipboard, IconClock, IconEdit, IconUsers } from '../components/Icons';
+import { IconCheckCircle, IconClock, IconUsers } from '../components/Icons';
 
 export default function GroupList() {
   const t = useTheme();
@@ -31,10 +31,10 @@ export default function GroupList() {
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 13 }}>
               <GroupIcon icon={g.icon} size={48} />
               <View style={{ flex: 1 }}>
-                <Txt weight="bold" size={15.5}>
+                <Txt weight="bold" size={15.5} numberOfLines={2}>
                   {g.name}
                 </Txt>
-                <Txt weight="semibold" size={12.5} color={t.inkSoft} style={{ marginTop: 2 }}>
+                <Txt weight="semibold" size={12.5} color={t.inkSoft} style={{ marginTop: 2 }} numberOfLines={1}>
                   Resp.: {g.aux}
                 </Txt>
               </View>
@@ -46,13 +46,13 @@ export default function GroupList() {
               <MiniStat icon={<IconClock size={15} />} label={g.last} />
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-              <Button sm variant="secondary" icon={<IconEdit size={15} />} style={{ flex: 1 }} onPress={() => go('GroupForm')}>
+              <Button sm variant="secondary" style={{ flex: 1 }} onPress={() => go('GroupForm')}>
                 Editar
               </Button>
-              <Button sm variant="secondary" icon={<IconUsers size={15} />} style={{ flex: 1 }} onPress={() => go('YouthList')}>
+              <Button sm variant="secondary" style={{ flex: 1 }} onPress={() => go('YouthList')}>
                 Jovens
               </Button>
-              <Button sm bg={t.primary} fg="#fff" icon={<IconClipboard size={15} />} style={{ flex: 1 }} onPress={() => go('Attendance', { group: g.id })}>
+              <Button sm bg={t.primary} fg={t.onPrimary} style={{ flex: 1 }} onPress={() => go('Attendance', { group: g.id })}>
                 Frequência
               </Button>
             </View>

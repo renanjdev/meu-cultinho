@@ -1,14 +1,17 @@
 /**
- * Meu Cultinho — design tokens for the 3 visual identities.
+ * Meu Cultinho — design tokens.
  *
  * The web prototype expressed these as CSS custom properties under
- * [data-theme="..."]. React Native has no CSS variables, so each theme is a
+ * [data-theme="..."]. React Native has no CSS variables, so the theme is a
  * plain object consumed through useTheme(). Colors, radii, fonts and shadow
  * presets are ported verbatim from styles.css.
+ *
+ * The product ships a single visual identity — "Aconchego" (cozy indigo +
+ * coral, Fredoka). The earlier Sereno/Jardim variants were dropped.
  */
 import type { TextStyle, ViewStyle } from 'react-native';
 
-export type ThemeName = 'sereno' | 'jardim' | 'aconchego';
+export type ThemeName = 'aconchego';
 
 export type FontWeightName =
   | 'regular'
@@ -31,13 +34,16 @@ export interface Theme {
   present: string;
   presentSoft: string;
   presentLine: string;
+  presentDeep: string;
   absent: string;
   absentSoft: string;
   absentLine: string;
+  absentDeep: string;
 
   // accent
   gold: string;
   goldSoft: string;
+  goldDeep: string;
 
   // surfaces
   bg: string;
@@ -97,84 +103,6 @@ const makeShadows = (
 });
 
 export const THEMES: Record<ThemeName, Theme> = {
-  // ---------- Sereno (soft blue — spec default) ----------
-  sereno: {
-    name: 'sereno',
-    primary: '#3a7bd0',
-    primaryDeep: '#2c61aa',
-    primarySoft: '#e9f1fb',
-    primaryTint: '#f3f8fd',
-    onPrimary: '#ffffff',
-    present: '#2f9e62',
-    presentSoft: '#e7f5ec',
-    presentLine: '#b6e0c5',
-    absent: '#d9554f',
-    absentSoft: '#fbeceb',
-    absentLine: '#f1c4c1',
-    gold: '#d99a2b',
-    goldSoft: '#fbf2dd',
-    bg: '#f5f7fb',
-    surface: '#ffffff',
-    surface2: '#f0f3f8',
-    ink: '#2a3340',
-    inkSoft: '#5d6878',
-    inkFaint: '#9aa3b2',
-    line: '#e6eaf0',
-    radiusCard: 20,
-    radiusBtn: 14,
-    radiusField: 14,
-    font: {
-      regular: 'Nunito_400Regular',
-      medium: 'Nunito_600SemiBold',
-      semibold: 'Nunito_600SemiBold',
-      bold: 'Nunito_700Bold',
-      extrabold: 'Nunito_800ExtraBold',
-    },
-    ...makeShadows('#1c2d46', '#3a7bd0'),
-    gradientSplash: ['#f3f8fd', '#f5f7fb'],
-    gradientHero: ['#f3f8fd', '#f5f7fb'],
-    gradientLogo: ['#3a7bd0', '#2c61aa'],
-  },
-
-  // ---------- Jardim (warm teal + gold) ----------
-  jardim: {
-    name: 'jardim',
-    primary: '#2a9387',
-    primaryDeep: '#1f7a70',
-    primarySoft: '#e2f1ee',
-    primaryTint: '#f1f8f6',
-    onPrimary: '#ffffff',
-    present: '#4ca35f',
-    presentSoft: '#e9f4ea',
-    presentLine: '#bfe0c3',
-    absent: '#d56a5b',
-    absentSoft: '#fbeeea',
-    absentLine: '#f0cac1',
-    gold: '#d3982f',
-    goldSoft: '#faf1da',
-    bg: '#f7f6f0',
-    surface: '#ffffff',
-    surface2: '#f1efe6',
-    ink: '#2c352f',
-    inkSoft: '#5f6a61',
-    inkFaint: '#9aa39a',
-    line: '#ece9df',
-    radiusCard: 22,
-    radiusBtn: 16,
-    radiusField: 14,
-    font: {
-      regular: 'Quicksand_400Regular',
-      medium: 'Quicksand_500Medium',
-      semibold: 'Quicksand_600SemiBold',
-      bold: 'Quicksand_700Bold',
-      extrabold: 'Quicksand_700Bold',
-    },
-    ...makeShadows('#28372d', '#2a9387'),
-    gradientSplash: ['#f1f8f6', '#f7f6f0'],
-    gradientHero: ['#f1f8f6', '#f7f6f0'],
-    gradientLogo: ['#2a9387', '#1f7a70'],
-  },
-
   // ---------- Aconchego (cozy indigo + coral) ----------
   aconchego: {
     name: 'aconchego',
@@ -186,11 +114,14 @@ export const THEMES: Record<ThemeName, Theme> = {
     present: '#44ad77',
     presentSoft: '#e8f6ef',
     presentLine: '#bce4cf',
+    presentDeep: '#2c7a52',
     absent: '#e9675f',
     absentSoft: '#fceceb',
     absentLine: '#f6c8c4',
+    absentDeep: '#bd3328',
     gold: '#efb02a',
     goldSoft: '#fdf3d8',
+    goldDeep: '#7d5310',
     bg: '#f4f4fb',
     surface: '#ffffff',
     surface2: '#eeeef7',
@@ -202,11 +133,15 @@ export const THEMES: Record<ThemeName, Theme> = {
     radiusBtn: 18,
     radiusField: 16,
     font: {
+      // Dialed down two steps from the prototype's heavy 700 so the rounded
+      // Fredoka reads softer: "bold" emphasis now renders at Medium (500), the
+      // rare "extrabold" peak at SemiBold (600), body stays Regular (400).
+      // (Hierarchy is carried by size + color + the indigo accents.)
       regular: 'Fredoka_400Regular',
       medium: 'Fredoka_500Medium',
-      semibold: 'Fredoka_600SemiBold',
-      bold: 'Fredoka_700Bold',
-      extrabold: 'Fredoka_700Bold',
+      semibold: 'Fredoka_500Medium',
+      bold: 'Fredoka_500Medium',
+      extrabold: 'Fredoka_600SemiBold',
     },
     ...makeShadows('#2a2d3a', '#5b6ce0'),
     gradientSplash: ['#f5f6fd', '#f4f4fb'],
@@ -215,18 +150,10 @@ export const THEMES: Record<ThemeName, Theme> = {
   },
 };
 
-export const DEFAULT_THEME: ThemeName = 'sereno';
+export const DEFAULT_THEME: ThemeName = 'aconchego';
 
-// Every font family that must be loaded at boot, across all three themes.
+// Every font family that must be loaded at boot.
 export const FONT_FAMILIES = [
-  'Nunito_400Regular',
-  'Nunito_600SemiBold',
-  'Nunito_700Bold',
-  'Nunito_800ExtraBold',
-  'Quicksand_400Regular',
-  'Quicksand_500Medium',
-  'Quicksand_600SemiBold',
-  'Quicksand_700Bold',
   'Fredoka_400Regular',
   'Fredoka_500Medium',
   'Fredoka_600SemiBold',

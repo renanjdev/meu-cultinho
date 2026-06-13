@@ -1,8 +1,7 @@
 /** 5. Lista de Jovens — search + group/status filters, role-aware nav. */
 import React, { useState } from 'react';
 import { View } from 'react-native';
-import { useTheme } from '../theme/ThemeProvider';
-import { useAuth } from '../hooks/useAuth';
+import { useApp, useTheme } from '../theme/ThemeProvider';
 import { useNav } from '../navigation/useNav';
 import { useYouthStore } from '../state/youthStore';
 import { GROUPS, groupShort } from '../data/seed';
@@ -31,8 +30,8 @@ import {
 
 export default function YouthList() {
   const t = useTheme();
-  const { session } = useAuth();
-  const isAux = session?.role === 'auxiliar';
+  const { role } = useApp();
+  const isAux = role === 'auxiliar';
   const { go, back } = useNav();
   const all = useYouthStore();
   const [q, setQ] = useState('');
@@ -72,14 +71,18 @@ export default function YouthList() {
         />
       </View>
 
-      <ScreenScroll contentStyle={{ paddingBottom: 96 }}>
+      <ScreenScroll contentStyle={{ paddingBottom: 120 }}>
         {list.length === 0 ? (
-          <Txt weight="semibold" color={t.inkFaint} style={{ textAlign: 'center', padding: 30 }}>
+          <Txt weight="semibold" color={t.inkSoft} style={{ textAlign: 'center', padding: 30 }}>
             Nenhum jovem encontrado.
           </Txt>
         ) : null}
         {list.map((j) => (
-          <CardRow key={j.id} onPress={() => go('YouthDetail', { id: j.id })}>
+          <CardRow
+            key={j.id}
+            onPress={() => go('YouthDetail', { id: j.id })}
+            accessibilityLabel={`${j.name}, ${j.age} anos, ${groupShort(j.group)}`}
+          >
             <Avatar name={j.name} size={48} />
             <View style={{ flex: 1 }}>
               <Txt weight="bold" size={15} numberOfLines={1}>
