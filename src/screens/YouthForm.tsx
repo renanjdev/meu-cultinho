@@ -120,8 +120,9 @@ export default function YouthForm() {
       }
       if (back) back();
       else go('YouthList');
-    } catch {
-      show('Erro ao salvar o jovem');
+    } catch (e: any) {
+      console.error('[salvar jovem]', e);
+      show('Falha: ' + String(e?.message || e?.error || e || 'erro').slice(0, 110));
     } finally {
       setSaving(false);
     }

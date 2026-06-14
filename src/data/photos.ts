@@ -3,6 +3,7 @@
  * "fotos"). Web-first: o seletor abre o file input do navegador; o upload usa
  * fetch(uri) -> Blob. O redimensionamento é best-effort (ImageManipulator).
  */
+import { Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { supabase } from '../services/supabase';
@@ -14,7 +15,8 @@ export type PhotoFolder = 'jovens' | 'auxiliares';
 export async function pickImage(): Promise<string | null> {
   const res = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ['images'],
-    allowsEditing: true,
+    // o editor de corte não existe no navegador; só ativa no celular nativo
+    allowsEditing: Platform.OS !== 'web',
     aspect: [1, 1],
     quality: 0.7,
   });
