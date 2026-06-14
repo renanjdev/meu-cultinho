@@ -1,10 +1,11 @@
 /** 4. Home Auxiliar — alert, quick actions, the groups they're responsible for. */
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Pressable, View } from 'react-native';
-import { useApp, useTheme } from '../theme/ThemeProvider';
+import { useTheme } from '../theme/ThemeProvider';
+import { useSession } from '../state/session';
 import { useNav } from '../navigation/useNav';
 import { useToast } from '../components/Toast';
-import { GROUPS } from '../data/seed';
+import { useGrupos } from '../data/repo';
 import {
   Avatar,
   BottomNav,
@@ -30,13 +31,13 @@ import {
 
 export default function AuxHome() {
   const t = useTheme();
-  const { setRole } = useApp();
+  const { session } = useSession();
   const { go } = useNav();
   const { show } = useToast();
+  const firstName = session?.name?.split(' ')[0] ?? 'Auxiliar';
 
-  useEffect(() => setRole('auxiliar'), [setRole]);
-
-  const myGroups = [GROUPS[4], GROUPS[2]]; // Moços, Meninos até 12
+  const { grupos } = useGrupos();
+  const myGroups = grupos.slice(0, 2); // placeholder: auxiliar's assigned groups
 
   return (
     <Screen>
@@ -52,10 +53,10 @@ export default function AuxHome() {
           borderBottomWidth: 1,
           borderBottomColor: t.line,
         }}>
-        <Avatar name="Lucas Souza" size={42} />
+        <Avatar name={session?.name ?? 'Auxiliar'} size={42} />
         <View style={{ flex: 1 }}>
           <Txt weight="bold" size={18} numberOfLines={1}>
-            Olá, Lucas 👋
+            Olá, {firstName} 👋
           </Txt>
           <Txt weight="semibold" size={12.5} color={t.inkSoft} numberOfLines={1}>
             Seus grupos sob responsabilidade
@@ -171,7 +172,7 @@ export default function AuxHome() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 }}>
                 <IconClock size={15} color={t.inkSoft} />
                 <Txt weight="semibold" size={12.5} color={t.inkSoft}>
-                  Última frequência: {g.last}
+                  Última frequência: —
                 </Txt>
               </View>
               <Button variant="secondary" icon={<IconClipboard size={18} />} style={{ marginTop: 12 }} onPress={() => go('Attendance', { group: g.id })}>

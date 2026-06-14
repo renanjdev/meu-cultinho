@@ -1,9 +1,11 @@
 /** 6. Cadastro de Jovem — three sections; Salvar creates a real roster entry. */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
+import { useRoute, type RouteProp } from '@react-navigation/native';
 import { useNav } from '../navigation/useNav';
-import { addYouth } from '../state/youthStore';
-import { GROUPS, type Youth } from '../data/seed';
+import { saveJovem, useGrupoOptions, useJovem } from '../data/repo';
+import type { Youth } from '../data/seed';
+import type { RootStackParamList } from '../navigation/types';
 import {
   AppBar,
   Button,
@@ -27,15 +29,66 @@ import {
 
 export default function YouthForm() {
   const { go, back } = useNav();
-  const [f, setF] = useState<Partial<Youth>>({ sex: 'Masculino', status: 'Ativo', group: 'g1' });
+  const route = useRoute<RouteProp<RootStackParamList, 'YouthForm'>>();
+  const editId = route.params?.id;
+  const { jovem } = useJovem(editId);
+  const grupoOptions = useGrupoOptions();
+  const [f, setF] = useState<Partial<Youth>>({ sex: 'Masculino', status: 'Ativo', group: '' });
   const [triedSave, setTriedSave] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [prefilled, setPrefilled] = useState(false);
   const set = (k: keyof Youth) => (v: string) => setF((s) => ({ ...s, [k]: v }));
   const trimmedName = f.name?.trim() ?? '';
   const nameMissing = trimmedName.length === 0;
 
+  useEffect(() => {
+    if (jovem && !prefilled) {
+      setF({
+        name: jovem.name,
+        birth: jovem.birth,
+        sex: jovem.sex ?? undefined,
+        group: jovem.grupoId ?? '',
+        father: jovem.father,
+        mother: jovem.mother,
+        phone: jovem.phone,
+        address: jovem.address,
+        notes: jovem.notes,
+        status: jovem.status,
+      });
+      setPrefilled(true);
+    }
+  }, [jovem, prefilled]);
+
+  const handleSave = async () => {
+    if (nameMissing) {
+      setTriedSave(true);
+      return;
+    }
+    setSaving(true);
+    try {
+      await saveJovem({
+        id: editId,
+        name: trimmedName,
+        birth: f.birth,
+        sex: f.sex,
+        grupo_id: f.group,
+        father: f.father,
+        mother: f.mother,
+        phone: f.phone,
+        address: f.address,
+        notes: f.notes,
+        status: f.status,
+      });
+      if (back) back();
+      else go('YouthList');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <Screen>
-      <AppBar title="Cadastrar Jovem" onBack={back} />
+      <AppBar title={editId ? 'Editar Jovem' : 'Cadastrar Jovem'} onBack={back} />
       <ScreenScroll contentStyle={{ paddingBottom: 24 }}>
         <FieldSection icon={<IconUser size={16} />}>Dados pessoais</FieldSection>
         <Field
@@ -61,7 +114,7 @@ export default function YouthForm() {
         <Field label="Endereço" placeholder="Rua, número, bairro" value={f.address} onChangeText={set('address')} icon={<IconMapPin size={17} />} />
 
         <FieldSection icon={<IconLayers size={16} />}>Grupo e observações</FieldSection>
-        <SelectField label="Grupo" value={f.group} onChange={set('group')} options={GROUPS.map((g) => ({ value: g.id, label: g.name }))} />
+        <SelectField label="Grupo" value={f.group} onChange={set('group')} options={grupoOptions} />
         <TextArea label="Observações" placeholder="Anotações sobre o jovem..." value={f.notes} onChangeText={set('notes')} />
         <Segmented label="Status" value={f.status} options={['Ativo', 'Inativo']} onChange={set('status')} />
 
@@ -69,14 +122,8 @@ export default function YouthForm() {
         <Button
           variant="primary"
           icon={<IconCheck size={19} />}
-          onPress={() => {
-            if (nameMissing) {
-              setTriedSave(true);
-              return;
-            }
-            addYouth({ ...f, name: trimmedName });
-            go('YouthList');
-          }}>
+          loading={saving}
+          onPress={handleSave}>
           Salvar jovem
         </Button>
         <Button variant="ghost" onPress={back}>

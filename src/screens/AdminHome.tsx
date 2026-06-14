@@ -1,16 +1,16 @@
 /** 3. Home Admin — dashboard: summary, quick actions, today's groups. */
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View } from 'react-native';
-import { useApp, useTheme } from '../theme/ThemeProvider';
+import { useTheme } from '../theme/ThemeProvider';
+import { useSession } from '../state/session';
 import { useToast } from '../components/Toast';
 import { useNav } from '../navigation/useNav';
-import { GROUPS } from '../data/seed';
+import { useJovens, useGrupos, useAuxiliares } from '../data/repo';
 import type { RouteName } from '../navigation/types';
 import {
   Avatar,
   BottomNav,
   CardRow,
-  Chip,
   GroupIcon,
   IconButton,
   Link,
@@ -49,13 +49,6 @@ interface ActionItem {
   primary?: boolean;
 }
 
-const SUMMARY: SummaryItem[] = [
-  { num: 48, label: 'Jovens ativos', Icon: IconUsers, tone: 'primary' },
-  { num: 5, label: 'Auxiliares', Icon: IconUser, tone: 'gold' },
-  { num: 6, label: 'Grupos', Icon: IconLayers, tone: 'present' },
-  { num: '85%', label: 'Última reunião', Icon: IconCheckCircle, tone: 'present' },
-];
-
 const ACTIONS: ActionItem[] = [
   { label: 'Registrar frequência', sub: 'Marcar presenças de hoje', Icon: IconClipboard, to: 'Attendance', primary: true },
   { label: 'Cadastrar jovem', sub: 'Adicionar nova criança ou jovem', Icon: IconUser, to: 'YouthForm' },
@@ -65,10 +58,19 @@ const ACTIONS: ActionItem[] = [
 export default function AdminHome() {
   const t = useTheme();
   const { show } = useToast();
-  const { setRole } = useApp();
+  const { session } = useSession();
   const { go } = useNav();
+  const { jovens } = useJovens();
+  const { grupos } = useGrupos();
+  const { auxiliares } = useAuxiliares();
+  const firstName = session?.name?.split(' ')[0] ?? 'Cooperador';
 
-  useEffect(() => setRole('admin'), [setRole]);
+  const SUMMARY: SummaryItem[] = [
+    { num: jovens.filter((j) => j.status === 'Ativo').length, label: 'Jovens ativos', Icon: IconUsers, tone: 'primary' },
+    { num: auxiliares.length, label: 'Auxiliares', Icon: IconUser, tone: 'gold' },
+    { num: grupos.length, label: 'Grupos', Icon: IconLayers, tone: 'present' },
+    { num: '—', label: 'Última reunião', Icon: IconCheckCircle, tone: 'present' },
+  ];
 
   return (
     <Screen>
@@ -84,10 +86,10 @@ export default function AdminHome() {
           borderBottomWidth: 1,
           borderBottomColor: t.line,
         }}>
-        <Avatar name="Renan Januário" size={42} />
+        <Avatar name={session?.name ?? 'Cooperador'} size={42} />
         <View style={{ flex: 1 }}>
-          <Txt weight="bold" size={18}>
-            Olá, Renan 👋
+          <Txt weight="bold" size={18} numberOfLines={1}>
+            Olá, {firstName} 👋
           </Txt>
           <Txt weight="semibold" size={12.5} color={t.inkSoft}>
             Resumo geral do Meu Cultinho
@@ -149,7 +151,7 @@ export default function AdminHome() {
         {/* groups today */}
         <SectionLabel action={<Link onPress={() => go('GroupList')}>Ver todos</Link>}>Grupos de hoje</SectionLabel>
         <View style={{ gap: 14 }}>
-          {GROUPS.slice(0, 3).map((g) => (
+          {grupos.slice(0, 3).map((g) => (
             <CardRow key={g.id} onPress={() => go('Attendance', { group: g.id })}>
               <GroupIcon icon={g.icon} />
               <View style={{ flex: 1 }}>
@@ -157,10 +159,9 @@ export default function AdminHome() {
                   {g.name}
                 </Txt>
                 <Txt weight="semibold" size={12.5} color={t.inkSoft} numberOfLines={1}>
-                  {g.count} jovens · {g.aux}
+                  {g.count} jovens · {g.auxName}
                 </Txt>
               </View>
-              <Chip tone="gold">{g.freq}%</Chip>
             </CardRow>
           ))}
         </View>

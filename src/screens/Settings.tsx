@@ -1,9 +1,9 @@
 /** 15. Configurações — profile, theme switcher, congregation, app, logout. */
 import React, { type ComponentType } from 'react';
 import { Pressable, View } from 'react-native';
-import { useApp, useTheme } from '../theme/ThemeProvider';
+import { useTheme } from '../theme/ThemeProvider';
+import { useSession } from '../state/session';
 import { useNav } from '../navigation/useNav';
-import { AUX } from '../data/seed';
 import {
   AppBar,
   Avatar,
@@ -37,10 +37,10 @@ import {
 
 export default function Settings() {
   const t = useTheme();
-  const { role, setRole } = useApp();
-  const isAux = role === 'auxiliar';
+  const { session, signOut } = useSession();
+  const isAux = session?.role === 'auxiliar';
   const { go } = useNav();
-  const me = isAux ? AUX[1] : AUX[0];
+  const roleLabel = isAux ? 'Auxiliar' : 'Cooperador';
 
   const Item = ({
     Icon,
@@ -93,16 +93,16 @@ export default function Settings() {
       <ScreenScroll contentStyle={{ paddingBottom: 24 }}>
         {/* profile */}
         <Card pad style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <Avatar name={me.name} size={58} />
+          <Avatar name={session?.name ?? ''} size={58} />
           <View style={{ flex: 1, minWidth: 0 }}>
             <Txt weight="bold" size={17} numberOfLines={1}>
-              {me.name}
+              {session?.name ?? ''}
             </Txt>
             <Txt weight="semibold" size={13} color={t.inkSoft} numberOfLines={1}>
-              {me.group}
+              {isAux ? 'Auxiliar' : 'Cooperador de jovens e menores'}
             </Txt>
             <View style={{ marginTop: 6 }}>
-              <Chip tone={me.role === 'Administrador' ? 'gold' : 'primary'}>{me.role}</Chip>
+              <Chip tone={isAux ? 'primary' : 'gold'}>{roleLabel}</Chip>
             </View>
           </View>
           <IconButton soft onPress={() => go('AuxForm')} accessibilityLabel="Editar perfil">
@@ -125,7 +125,7 @@ export default function Settings() {
         </Card>
 
         <Card style={{ paddingHorizontal: 14, paddingVertical: 4, marginTop: 4 }}>
-          <Item Icon={IconLogout} label="Sair" danger onPress={() => { setRole('admin'); go('Login'); }} />
+          <Item Icon={IconLogout} label="Sair" danger onPress={() => { void signOut(); }} />
         </Card>
         <Txt weight="semibold" size={12} color={t.inkFaint} style={{ textAlign: 'center', marginTop: 4 }}>
           Meu Cultinho · versão 1.0

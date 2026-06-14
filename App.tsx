@@ -18,6 +18,7 @@ import {
 } from '@expo-google-fonts/fredoka';
 
 import { AppProvider, useTheme } from './src/theme/ThemeProvider';
+import { SessionProvider, useSession } from './src/state/session';
 import { ToastProvider } from './src/components/Toast';
 import { LogoMark } from './src/components/ui';
 import type { RootStackParamList } from './src/navigation/types';
@@ -80,10 +81,8 @@ function appScreens() {
   );
 }
 
-// One native-stack navigator holds the whole prototype: Splash → Login → the
-// 13 in-app screens. Login navigates to a home by role (no real auth); see
-// LoginScreen and the role state in ThemeProvider.
-function RootNavigator() {
+// Signed-out: splash + login.
+function AuthNavigator() {
   const t = useTheme();
   const navTheme = useNavTheme();
   return (
@@ -93,10 +92,33 @@ function RootNavigator() {
         screenOptions={{ headerShown: false, animation: 'slide_from_right', contentStyle: { backgroundColor: t.bg } }}>
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
+// Signed-in: the in-app screens, starting at the home for the user's role
+// (cooperador → AdminHome, auxiliar → AuxHome).
+function AppNavigator({ role }: { role: 'cooperador' | 'auxiliar' }) {
+  const t = useTheme();
+  const navTheme = useNavTheme();
+  return (
+    <NavigationContainer theme={navTheme}>
+      <Stack.Navigator
+        initialRouteName={role === 'auxiliar' ? 'AuxHome' : 'AdminHome'}
+        screenOptions={{ headerShown: false, animation: 'slide_from_right', contentStyle: { backgroundColor: t.bg } }}>
         {appScreens()}
       </Stack.Navigator>
     </NavigationContainer>
   );
+}
+
+// Auth gate: Supabase session decides which navigator to mount.
+function Gate() {
+  const { session, loading } = useSession();
+  if (loading) return <BootScreen />;
+  if (!session) return <AuthNavigator />;
+  return <AppNavigator role={session.role} />;
 }
 
 /**
@@ -141,7 +163,9 @@ export default function App() {
       <SafeAreaProvider>
         <AppProvider>
           <StatusBar style="dark" />
-          <ToastProvider>{ready ? <RootNavigator /> : <BootScreen />}</ToastProvider>
+          <SessionProvider>
+            <ToastProvider>{ready ? <Gate /> : <BootScreen />}</ToastProvider>
+          </SessionProvider>
         </AppProvider>
       </SafeAreaProvider>
     </AppFrame>

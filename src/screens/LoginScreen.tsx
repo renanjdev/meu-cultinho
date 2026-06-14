@@ -1,23 +1,36 @@
-/** 2. Login — front-end only: the two buttons navigate to a home by role. */
+/** 2. Login — real auth via Supabase (usuário + senha). */
 import React, { useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import { useApp, useTheme } from '../theme/ThemeProvider';
-import { useNav } from '../navigation/useNav';
+import { useTheme } from '../theme/ThemeProvider';
+import { useSession } from '../state/session';
+import { useToast } from '../components/Toast';
 import { Button, Field, Link, LogoMark, Screen, Txt } from '../components/ui';
 import { IconLock, IconUser } from '../components/Icons';
-import { useToast } from '../components/Toast';
 
 export default function LoginScreen() {
   const t = useTheme();
-  const { setRole } = useApp();
-  const { go } = useNav();
+  const { signIn } = useSession();
   const { show } = useToast();
-  const [user, setUser] = useState('renan.j');
+  const [user, setUser] = useState('renan');
   const [pass, setPass] = useState('');
+  const [erro, setErro] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const enter = (role: 'admin' | 'auxiliar') => {
-    setRole(role);
-    go(role === 'admin' ? 'AdminHome' : 'AuxHome');
+  const entrar = async () => {
+    if (busy) return;
+    setErro('');
+    setBusy(true);
+    try {
+      // On success the auth gate swaps to the app navigator automatically.
+      await signIn(user.trim(), pass);
+    } catch (e) {
+      setErro(
+        e instanceof Error && e.message === 'SEM_PERFIL'
+          ? 'Login ok, mas não há perfil cadastrado para este usuário (rode o INSERT do cooperador no banco).'
+          : 'Usuário ou senha inválidos.',
+      );
+      setBusy(false);
+    }
   };
 
   return (
@@ -37,7 +50,15 @@ export default function LoginScreen() {
         </View>
 
         <View style={{ gap: 14 }}>
-          <Field label="Usuário" value={user} onChangeText={setUser} placeholder="seu.usuario" icon={<IconUser size={19} />} autoComplete="username" textContentType="username" />
+          <Field
+            label="Usuário"
+            value={user}
+            onChangeText={setUser}
+            placeholder="seu.usuario"
+            icon={<IconUser size={19} />}
+            autoComplete="username"
+            textContentType="username"
+          />
           <Field
             label="Senha"
             value={pass}
@@ -51,12 +72,14 @@ export default function LoginScreen() {
           <View style={{ alignItems: 'flex-end' }}>
             <Link onPress={() => show('Em breve')}>Esqueci minha senha</Link>
           </View>
+          {erro ? (
+            <Txt weight="semibold" size={13} color={t.absent}>
+              {erro}
+            </Txt>
+          ) : null}
           <View style={{ height: 4 }} />
-          <Button variant="primary" onPress={() => enter('admin')}>
+          <Button variant="primary" loading={busy} onPress={entrar}>
             Entrar
-          </Button>
-          <Button variant="secondary" onPress={() => enter('auxiliar')}>
-            Entrar como auxiliar
           </Button>
         </View>
 

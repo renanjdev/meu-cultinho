@@ -5,8 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRoute, type RouteProp } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useNav } from '../navigation/useNav';
-import { deleteYouth, getYouth } from '../state/youthStore';
-import { YOUTH, groupName, type AttendanceMark } from '../data/seed';
+import { useJovem, deleteJovem } from '../data/repo';
 import type { RootStackParamList } from '../navigation/types';
 import {
   AppBar,
@@ -32,21 +31,25 @@ import {
   IconX,
 } from '../components/Icons';
 
-const RECENT: [string, AttendanceMark][] = [
-  ['02 jun', 'Presente'],
-  ['26 mai', 'Falta'],
-  ['19 mai', 'Presente'],
-  ['12 mai', 'Presente'],
-];
-
 export default function YouthDetail() {
   const t = useTheme();
   const { go, back } = useNav();
   const route = useRoute<RouteProp<RootStackParamList, 'YouthDetail'>>();
-  const j = getYouth(route.params?.id) ?? YOUTH[2];
+  const { jovem: j } = useJovem(route.params?.id);
   const [confirm, setConfirm] = useState(false);
 
   const divider = <View style={{ height: 1, backgroundColor: t.line, marginVertical: 11 }} />;
+
+  if (!j) {
+    return (
+      <Screen>
+        <AppBar title="Detalhes do Jovem" onBack={back} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <Txt color={t.inkSoft}>Jovem não encontrado.</Txt>
+        </View>
+      </Screen>
+    );
+  }
 
   return (
     <Screen>
@@ -71,7 +74,7 @@ export default function YouthDetail() {
             {j.name}
           </Txt>
           <Txt weight="semibold" size={13.5} color={t.inkSoft} numberOfLines={1}>
-            {j.age} anos · {groupName(j.group)}
+            {j.age} anos · {j.grupoName}
           </Txt>
           <View style={{ marginTop: 10 }}>
             <StatusChip kind={j.status} />
@@ -81,9 +84,9 @@ export default function YouthDetail() {
         <View style={{ padding: 16, gap: 14 }}>
           {/* stats */}
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <StatTile num={j.present} label="Presenças" tone="present" style={{ flex: 1 }} />
-            <StatTile num={j.absent} label="Faltas" tone="absent" style={{ flex: 1 }} />
-            <StatTile num={`${j.freq}%`} label="Frequência" tone="primary" style={{ flex: 1 }} />
+            <StatTile num={0} label="Presenças" tone="present" style={{ flex: 1 }} />
+            <StatTile num={0} label="Faltas" tone="absent" style={{ flex: 1 }} />
+            <StatTile num="—" label="Frequência" tone="primary" style={{ flex: 1 }} />
           </View>
 
           <SectionLabel>Dados do responsável</SectionLabel>
@@ -111,17 +114,7 @@ export default function YouthDetail() {
 
           <SectionLabel>Histórico recente</SectionLabel>
           <Card pad>
-            {RECENT.map(([date, mark], i) => (
-              <View key={date}>
-                {i > 0 ? divider : null}
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Txt weight="bold" size={14}>
-                    {date}
-                  </Txt>
-                  <StatusChip kind={mark} />
-                </View>
-              </View>
-            ))}
+            <Txt color={t.inkSoft}>Sem registros ainda.</Txt>
           </Card>
 
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
@@ -145,9 +138,9 @@ export default function YouthDetail() {
         message={`${j.name} será removido(a) da lista. Esta ação não pode ser desfeita.`}
         confirmLabel="Excluir"
         onCancel={() => setConfirm(false)}
-        onConfirm={() => {
+        onConfirm={async () => {
           setConfirm(false);
-          deleteYouth(j.id);
+          await deleteJovem(j.id);
           go('YouthList');
         }}
       />

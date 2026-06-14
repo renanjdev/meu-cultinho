@@ -3,7 +3,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useNav } from '../navigation/useNav';
-import { GROUPS } from '../data/seed';
+import { useGrupos } from '../data/repo';
 import {
   AppBar,
   Button,
@@ -16,17 +16,23 @@ import {
   StatusChip,
   Txt,
 } from '../components/ui';
-import { IconCheckCircle, IconClock, IconUsers } from '../components/Icons';
+import { IconUsers } from '../components/Icons';
 
 export default function GroupList() {
   const t = useTheme();
   const { go, back } = useNav();
+  const { grupos } = useGrupos();
 
   return (
     <Screen>
-      <AppBar title="Grupos" sub={`${GROUPS.length} grupos`} onBack={back} />
+      <AppBar title="Grupos" sub={`${grupos.length} grupos`} onBack={back} />
       <ScreenScroll contentStyle={{ paddingBottom: 96 }}>
-        {GROUPS.map((g) => (
+        {grupos.length === 0 && (
+          <Card pad>
+            <Txt color={t.inkSoft}>Nenhum grupo cadastrado ainda.</Txt>
+          </Card>
+        )}
+        {grupos.map((g) => (
           <Card key={g.id} pad>
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 13 }}>
               <GroupIcon icon={g.icon} size={48} />
@@ -35,15 +41,13 @@ export default function GroupList() {
                   {g.name}
                 </Txt>
                 <Txt weight="semibold" size={12.5} color={t.inkSoft} style={{ marginTop: 2 }} numberOfLines={1}>
-                  Resp.: {g.aux}
+                  Resp.: {g.auxName}
                 </Txt>
               </View>
               <StatusChip kind={g.status} />
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
               <MiniStat icon={<IconUsers size={15} />} label={`${g.count} jovens`} />
-              <MiniStat icon={<IconCheckCircle size={15} />} label={`${g.freq}%`} tone="present" />
-              <MiniStat icon={<IconClock size={15} />} label={g.last} />
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
               <Button sm variant="secondary" style={{ flex: 1 }} onPress={() => go('GroupForm')}>
