@@ -29,6 +29,8 @@ export interface Jovem {
   birth: string;
   age: number;
   sex: 'Masculino' | 'Feminino' | null;
+  batizado: boolean;
+  batismo: string;
   status: Status;
   grupoId: string | null;
   grupoShort: string;
@@ -87,7 +89,7 @@ export function useGrupoOptions() {
 
 /* ------------------------------------------------------------------ Jovens */
 const JOVEM_SELECT =
-  'id, name, birth, sex, status, grupo_id, father, mother, phone, address, notes, grupos(name, short)';
+  'id, name, birth, sex, batizado, batismo, status, grupo_id, father, mother, phone, address, notes, grupos(name, short)';
 
 function mapJovem(j: any): Jovem {
   return {
@@ -96,6 +98,8 @@ function mapJovem(j: any): Jovem {
     birth: j.birth ?? '',
     age: j.birth ? ageFrom(j.birth) : 0,
     sex: j.sex,
+    batizado: j.batizado ?? false,
+    batismo: j.batismo ?? '',
     status: j.status,
     grupoId: j.grupo_id,
     grupoShort: j.grupos?.short ?? j.grupos?.name ?? '—',
@@ -142,6 +146,8 @@ export interface JovemInput {
   name: string;
   birth?: string;
   sex?: string;
+  batizado?: boolean;
+  batismo?: string;
   grupo_id?: string | null;
   father?: string;
   mother?: string;
@@ -152,10 +158,14 @@ export interface JovemInput {
 }
 
 export async function saveJovem(input: JovemInput): Promise<void> {
+  const batizado = input.batizado ?? false;
   const row = {
     name: input.name,
     birth: input.birth || null,
     sex: input.sex || null,
+    batizado,
+    // a data só faz sentido quando batizado; senão fica limpa
+    batismo: batizado ? input.batismo || null : null,
     grupo_id: input.grupo_id || null,
     father: input.father || null,
     mother: input.mother || null,

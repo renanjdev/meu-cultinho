@@ -6,6 +6,7 @@ import { useRoute, type RouteProp } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useNav } from '../navigation/useNav';
 import { useJovem, deleteJovem } from '../data/repo';
+import { ageFrom } from '../data/age';
 import type { RootStackParamList } from '../navigation/types';
 import {
   AppBar,
@@ -23,12 +24,15 @@ import {
   Txt,
 } from '../components/ui';
 import {
+  IconCalendar,
+  IconCheckCircle,
   IconClock,
   IconEdit,
   IconMapPin,
   IconUser,
   IconWhats,
   IconX,
+  IconXCircle,
 } from '../components/Icons';
 
 export default function YouthDetail() {
@@ -50,6 +54,15 @@ export default function YouthDetail() {
       </Screen>
     );
   }
+
+  // "há X anos" desde o batismo (só quando batizado e com data válida).
+  const tempoBatismo = (() => {
+    if (!j.batizado || !j.batismo) return '';
+    const anos = ageFrom(j.batismo);
+    if (anos < 0) return ''; // data futura/erro de digitação: mostra só a data
+    if (anos === 0) return 'há menos de 1 ano';
+    return `há ${anos} ano${anos > 1 ? 's' : ''}`;
+  })();
 
   return (
     <Screen>
@@ -88,6 +101,25 @@ export default function YouthDetail() {
             <StatTile num={0} label="Faltas" tone="absent" style={{ flex: 1 }} />
             <StatTile num="—" label="Frequência" tone="primary" style={{ flex: 1 }} />
           </View>
+
+          <SectionLabel>Batismo</SectionLabel>
+          <Card pad>
+            <InfoRow
+              icon={j.batizado ? <IconCheckCircle size={18} /> : <IconXCircle size={18} />}
+              label="Situação"
+              value={j.batizado ? 'Batizado' : 'Não batizado'}
+            />
+            {j.batizado ? (
+              <>
+                {divider}
+                <InfoRow
+                  icon={<IconCalendar size={18} />}
+                  label="Data do batismo"
+                  value={j.batismo ? `${j.batismo}${tempoBatismo ? ` · ${tempoBatismo}` : ''}` : 'Não informada'}
+                />
+              </>
+            ) : null}
+          </Card>
 
           <SectionLabel>Dados do responsável</SectionLabel>
           <Card pad>

@@ -65,6 +65,8 @@ create table if not exists public.jovens (
   name        text not null,
   birth       text,                 -- dd/mm/aaaa
   sex         text check (sex in ('Masculino','Feminino')),
+  batizado    boolean not null default false,
+  batismo     text,                 -- dd/mm/aaaa (preenchido só quando batizado)
   grupo_id    uuid references public.grupos(id) on delete set null,
   father      text,
   mother      text,
@@ -76,6 +78,10 @@ create table if not exists public.jovens (
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
+
+-- Migração idempotente (bancos já criados antes das colunas de batismo)
+alter table public.jovens add column if not exists batizado boolean not null default false;
+alter table public.jovens add column if not exists batismo  text;
 
 -- Presenças (uma marcação por jovem por data)
 create table if not exists public.presencas (
