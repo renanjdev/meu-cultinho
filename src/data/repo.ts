@@ -5,7 +5,7 @@
  * screen shows up when you return to the list. Derived display fields (age,
  * group name, youth count) are computed here so screens stay thin.
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
 import { ageFrom } from './age';
@@ -189,4 +189,71 @@ export function useAuxiliares() {
   }, []);
   useFocusEffect(useCallback(() => void reload(), [reload]));
   return { auxiliares, loading, reload };
+}
+
+/* --------------------------------------------------------------- Presenças */
+export type Mark = 'present' | 'absent';
+
+/** Local date as YYYY-MM-DD (the presencas.data column). */
+export function todayISO(): string {
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
+/** YYYY-MM-DD -> dd/mm/aaaa for display. */
+export function isoToBR(iso: string): string {
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+/** Existing marks for a meeting (date + group), keyed by youth id. */
+export function useMarks(date: string, grupoId: string | undefined) {
+  const [marks, setMarks] = useState<Record<string, Mark>>({});
+  const [loading, setLoading] = useState(true);
+  const reload = useCallback(async () => {
+    if (!grupoId) {
+      setMarks({});
+      setLoading(false);
+      return;
+    }
+    const { data } = await supabase
+      .from('presencas')
+      .select('jovem_id, status')
+      .eq('data', date)
+      .eq('grupo_id', grupoId);
+    const m: Record<string, Mark> = {};
+    (data ?? []).forEach((r: any) => {
+      m[r.jovem_id] = r.status;
+    });
+    setMarks(m);
+    setLoading(false);
+  }, [date, grupoId]);
+  useEffect(() => void reload(), [reload]);
+  return { marks, setMarks, loading, reload };
+}
+
+/** Upsert one youth's mark (or delete it when status is null). */
+export async function setMark(
+  date: string,
+  grupoId: string,
+  jovemId: string,
+  status: Mark | null,
+  marcadoPor?: string,
+): Promise<void> {
+  if (status === null) {
+    const { error } = await supabase
+      .from('presencas')
+      .delete()
+      .eq('data', date)
+      .eq('jovem_id', jovemId);
+    if (error) throw error;
+    return;
+  }
+  const { error } = await supabase.from('presencas').upsert(
+    { data: date, grupo_id: grupoId, jovem_id: jovemId, status, marcado_por: marcadoPor ?? null },
+    { onConflict: 'data,jovem_id' },
+  );
+  if (error) throw error;
 }
