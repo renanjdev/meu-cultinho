@@ -120,9 +120,9 @@ export default function YouthForm() {
       }
       if (back) back();
       else go('YouthList');
-    } catch (e: any) {
+    } catch (e) {
       console.error('[salvar jovem]', e);
-      show('Falha: ' + String(e?.message || e?.error || e || 'erro').slice(0, 110));
+      show('Não foi possível salvar. Tente de novo.');
     } finally {
       setSaving(false);
     }
@@ -197,8 +197,8 @@ export default function YouthForm() {
         ) : null}
 
         <FieldSection icon={<IconHeart size={16} />}>Responsáveis</FieldSection>
-        <Field label="Nome do pai" placeholder="Nome do pai" value={f.father} onChangeText={set('father')} />
-        <Field label="Nome da mãe" placeholder="Nome da mãe" value={f.mother} onChangeText={set('mother')} />
+        <Field label="Nome do pai" placeholder="Ex: Carlos Souza" value={f.father} onChangeText={set('father')} />
+        <Field label="Nome da mãe" placeholder="Ex: Maria Souza" value={f.mother} onChangeText={set('mother')} />
         <Field label="WhatsApp do responsável" placeholder="(11) 90000-0000" value={f.phone} onChangeText={set('phone')} keyboardType="phone-pad" icon={<IconWhats size={17} />} />
         <Field label="Endereço" placeholder="Rua, número, bairro" value={f.address} onChangeText={set('address')} icon={<IconMapPin size={17} />} />
 
