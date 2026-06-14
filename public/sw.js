@@ -1,12 +1,18 @@
 /**
- * Service worker mínimo do Meu Cultinho.
- * Estratégia network-first com fallback de cache: online sempre busca o dado
- * fresco; offline, serve a última versão em cache (e o app-shell "/" para
- * navegações). Existe sobretudo para tornar o app instalável (PWA standalone).
+ * Service worker do Meu Cultinho (modo "prompt").
+ * Estratégia network-first com fallback de cache. NÃO ativa sozinho (sem
+ * skipWaiting no install): a nova versão fica em "waiting" até o usuário tocar
+ * "Atualizar" no banner (ver public/sw-register.js), que envia SKIP_WAITING.
  */
-const CACHE = 'cultinho-v1';
+const CACHE = 'cultinho-v2';
 
-self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('install', () => {
+  // sem skipWaiting: a nova versão aguarda a confirmação do usuário
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
@@ -21,6 +27,10 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
+  // Só o app (mesma origem) é cacheado. A API do Supabase (cross-origin) passa
+  // direto: sempre fresca, e nunca cacheada por URL (evita dado velho e
+  // vazamento de leitura entre auxiliares após troca de login).
+  if (new URL(request.url).origin !== self.location.origin) return;
   event.respondWith(
     fetch(request)
       .then((res) => {
