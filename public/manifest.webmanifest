@@ -1,0 +1,27 @@
+{
+  "id": "/",
+  "name": "Meu Cultinho",
+  "short_name": "Meu Cultinho",
+  "description": "Cuidado e organização para a reunião de jovens e menores",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f4fb",
+  "theme_color": "#5b6ce0",
+  "icons": [
+    {
+      "src": "/icons/icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
