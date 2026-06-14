@@ -7,7 +7,7 @@ import { useNav } from '../navigation/useNav';
 import { useToast } from '../components/Toast';
 import { saveJovem, updatePhotoUrl, useGrupoOptions, useJovem } from '../data/repo';
 import { pickImage, uploadPhoto } from '../data/photos';
-import { maskDateBR, validateDateBR } from '../data/date';
+import { validateDateBR } from '../data/date';
 import type { Youth } from '../data/seed';
 import type { RootStackParamList } from '../navigation/types';
 import {
@@ -64,7 +64,11 @@ export default function YouthForm() {
   const trimmedName = f.name?.trim() ?? '';
   const nameMissing = trimmedName.length === 0;
 
-  // Batismo: data opcional, mas se preenchida precisa ser válida e não-futura.
+  // Datas opcionais, mas se preenchidas precisam ser válidas e não-futuras.
+  const birthRaw = f.birth ?? '';
+  const birthErr = birthRaw.trim() ? validateDateBR(birthRaw) : '';
+  const showBirthErr = !!birthErr && (triedSave || birthRaw.length >= 10);
+
   const batismoRaw = f.batismo ?? '';
   const batismoErr =
     f.batizado === 'Sim' && batismoRaw.trim() ? validateDateBR(batismoRaw) : '';
@@ -93,7 +97,7 @@ export default function YouthForm() {
   }, [jovem, prefilled]);
 
   const handleSave = async () => {
-    if (nameMissing || batismoErr) {
+    if (nameMissing || batismoErr || birthErr) {
       setTriedSave(true);
       return;
     }
@@ -170,7 +174,7 @@ export default function YouthForm() {
         />
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <View style={{ flex: 1 }}>
-            <Field label="Nascimento" placeholder="dd/mm/aaaa" value={f.birth} onChangeText={set('birth')} keyboardType="number-pad" icon={<IconCalendar size={17} />} />
+            <Field label="Nascimento" dateMask placeholder="dd/mm/aaaa" value={f.birth} onChangeText={set('birth')} icon={<IconCalendar size={17} />} error={showBirthErr ? birthErr : undefined} />
           </View>
           <View style={{ flex: 1 }}>
             <Segmented label="Sexo" value={f.sex} options={['Masculino', 'Feminino']} onChange={set('sex')} />
@@ -187,10 +191,10 @@ export default function YouthForm() {
         {f.batizado === 'Sim' ? (
           <Field
             label="Data do batismo"
+            dateMask
             placeholder="dd/mm/aaaa"
             value={f.batismo}
-            onChangeText={(v) => set('batismo')(maskDateBR(v))}
-            keyboardType="number-pad"
+            onChangeText={set('batismo')}
             icon={<IconCalendar size={17} />}
             error={showBatismoErr ? batismoErr : undefined}
           />

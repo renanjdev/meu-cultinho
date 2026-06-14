@@ -28,15 +28,15 @@ export default function AuxForm() {
         <FieldSection icon={<IconUser size={16} />}>Dados pessoais</FieldSection>
         <Field label="Nome completo" placeholder="Ex: Lucas Souza" value={f.name} onChangeText={set('name')} />
         <Field label="WhatsApp" placeholder="(11) 90000-0000" value={f.phone} onChangeText={set('phone')} keyboardType="phone-pad" icon={<IconWhats size={17} />} />
-        <Field label="Data de nascimento" placeholder="dd/mm/aaaa" value={f.birth} onChangeText={set('birth')} icon={<IconCalendar size={17} />} />
+        <Field label="Data de nascimento" dateMask placeholder="dd/mm/aaaa" value={f.birth} onChangeText={set('birth')} icon={<IconCalendar size={17} />} />
 
         <FieldSection icon={<IconBook size={16} />}>Função na reunião</FieldSection>
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <View style={{ flex: 1 }}>
-            <Field label="Data de batismo" placeholder="dd/mm/aaaa" value={f.baptism} onChangeText={set('baptism')} icon={<IconCalendar size={17} />} />
+            <Field label="Data de batismo" dateMask placeholder="dd/mm/aaaa" value={f.baptism} onChangeText={set('baptism')} icon={<IconCalendar size={17} />} />
           </View>
           <View style={{ flex: 1 }}>
-            <Field label="Apresentação" placeholder="dd/mm/aaaa" value={f.presented} onChangeText={set('presented')} icon={<IconCalendar size={17} />} />
+            <Field label="Apresentação" dateMask placeholder="dd/mm/aaaa" value={f.presented} onChangeText={set('presented')} icon={<IconCalendar size={17} />} />
           </View>
         </View>
         <SelectField
