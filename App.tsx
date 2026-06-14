@@ -37,6 +37,8 @@ import GroupForm from './src/screens/GroupForm';
 import Attendance from './src/screens/Attendance';
 import HistoryScreen from './src/screens/HistoryScreen';
 import Reports from './src/screens/Reports';
+import CalendarScreen from './src/screens/CalendarScreen';
+import EventForm from './src/screens/EventForm';
 import Settings from './src/screens/Settings';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -76,6 +78,8 @@ function appScreens() {
       <Stack.Screen name="Attendance" component={Attendance} />
       <Stack.Screen name="History" component={HistoryScreen} />
       <Stack.Screen name="Reports" component={Reports} />
+      <Stack.Screen name="Calendar" component={CalendarScreen} />
+      <Stack.Screen name="EventForm" component={EventForm} />
       <Stack.Screen name="Settings" component={Settings} />
     </>
   );

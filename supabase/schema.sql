@@ -181,3 +181,27 @@ from (values
   ('Pedro Henrique Dias','30/01/2015','Masculino','Meninos até 12 anos','Henrique Dias','Carla Dias','(11) 98245-6677','Rua das Palmeiras, 301 — Centro','')
 ) as v(name, birth, sex, gname, father, mother, phone, address, notes)
 where not exists (select 1 from public.jovens j where j.name = v.name);
+
+-- ============================================================================
+-- Eventos do calendário (aniversários são derivados de jovens/auxiliares.birth)
+-- ============================================================================
+create table if not exists public.eventos (
+  id          uuid primary key default gen_random_uuid(),
+  title       text not null,
+  data        date not null,
+  descricao   text,
+  criado_por  uuid references public.auxiliares(id) on delete set null,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create index if not exists eventos_data_idx on public.eventos (data);
+
+alter table public.eventos enable row level security;
+drop policy if exists "read auth" on public.eventos;
+create policy "read auth" on public.eventos for select to authenticated using (true);
+drop policy if exists "write auth" on public.eventos;
+create policy "write auth" on public.eventos for all to authenticated using (true) with check (true);
+
+drop trigger if exists t_evt_upd on public.eventos;
+create trigger t_evt_upd before update on public.eventos
+  for each row execute function public.touch_updated_at();

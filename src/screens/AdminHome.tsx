@@ -23,6 +23,7 @@ import {
 } from '../components/ui';
 import {
   IconBell,
+  IconCalendar,
   IconChart,
   IconCheckCircle,
   IconChevR,
@@ -53,6 +54,7 @@ const ACTIONS: ActionItem[] = [
   { label: 'Registrar frequência', sub: 'Marcar presenças de hoje', Icon: IconClipboard, to: 'Attendance', primary: true },
   { label: 'Cadastrar jovem', sub: 'Adicionar nova criança ou jovem', Icon: IconUser, to: 'YouthForm' },
   { label: 'Ver relatórios', sub: 'Estatísticas e frequência', Icon: IconChart, to: 'Reports' },
+  { label: 'Calendário', sub: 'Aniversários e eventos', Icon: IconCalendar, to: 'Calendar' },
 ];
 
 export default function AdminHome() {
