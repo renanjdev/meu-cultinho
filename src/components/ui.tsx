@@ -11,6 +11,7 @@
  *  - Focus rings / box-shadows become border-color changes + elevation.
  */
 import React, {
+  useId,
   useState,
   type ReactElement,
   type ReactNode,
@@ -469,6 +470,7 @@ export function Field({
   keyboardType,
   editable = true,
   error,
+  required,
   accessibilityLabel,
   autoComplete,
   textContentType,
@@ -482,18 +484,29 @@ export function Field({
   keyboardType?: KeyboardTypeOptions;
   editable?: boolean;
   error?: string;
+  required?: boolean;
   accessibilityLabel?: string;
   autoComplete?: TextInputProps['autoComplete'];
   textContentType?: TextInputProps['textContentType'];
 }) {
   const t = useTheme();
+  const errId = useId();
   const [focused, setFocused] = useState(false);
   const borderColor = error ? t.absent : focused ? t.primary : t.line;
+  // react-native-web encaminha aria-*: marca inválido + aponta a mensagem de
+  // erro + sinaliza obrigatório para leitores de tela.
+  const webA11y: Record<string, unknown> = {};
+  if (error) {
+    webA11y['aria-invalid'] = true;
+    webA11y['aria-describedby'] = errId;
+  }
+  if (required) webA11y['aria-required'] = true;
   return (
     <View style={{ gap: t.space.sm }}>
       {label ? (
-        <Txt weight="bold" size={13} color={t.inkSoft}>
+        <Txt weight="bold" size={13} color={t.inkSoft} numberOfLines={1}>
           {label}
+          {required ? <Txt color={t.primary}> *</Txt> : null}
         </Txt>
       ) : null}
       <View style={{ justifyContent: 'center' }}>
@@ -504,6 +517,7 @@ export function Field({
           </View>
         ) : null}
         <TextInput
+          {...(webA11y as object)}
           value={value ?? ''}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -531,7 +545,12 @@ export function Field({
         />
       </View>
       {error ? (
-        <Txt weight="semibold" size={12} color={t.absent}>
+        <Txt
+          weight="semibold"
+          size={12}
+          color={t.absent}
+          nativeID={errId}
+          accessibilityLiveRegion="polite">
           {error}
         </Txt>
       ) : null}
@@ -555,7 +574,7 @@ export function TextArea({
   return (
     <View style={{ gap: t.space.sm }}>
       {label ? (
-        <Txt weight="bold" size={13} color={t.inkSoft}>
+        <Txt weight="bold" size={13} color={t.inkSoft} numberOfLines={1}>
           {label}
         </Txt>
       ) : null}
@@ -683,7 +702,7 @@ export function SelectField({
   return (
     <View style={{ gap: t.space.sm }}>
       {label ? (
-        <Txt weight="bold" size={13} color={t.inkSoft}>
+        <Txt weight="bold" size={13} color={t.inkSoft} numberOfLines={1}>
           {label}
         </Txt>
       ) : null}
@@ -691,6 +710,8 @@ export function SelectField({
         onPress={() => setOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={label}
+        accessibilityState={{ expanded: open }}
+        accessibilityValue={{ text: currentLabel }}
         style={({ pressed }) => [
           {
             flexDirection: 'row',
@@ -739,19 +760,22 @@ export function Segmented({
   return (
     <View style={{ gap: t.space.sm }}>
       {label ? (
-        <Txt weight="bold" size={13} color={t.inkSoft}>
+        <Txt weight="bold" size={13} color={t.inkSoft} numberOfLines={1}>
           {label}
         </Txt>
       ) : null}
-      <View style={{ flexDirection: 'row', gap: 6, backgroundColor: t.surface2, padding: 4, borderRadius: 14 }}>
+      <View
+        accessibilityRole="radiogroup"
+        accessibilityLabel={label}
+        style={{ flexDirection: 'row', gap: 6, backgroundColor: t.surface2, padding: 4, borderRadius: 14 }}>
         {options.map((o) => {
           const on = value === o;
           return (
             <Pressable
               key={o}
               onPress={() => onChange?.(o)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: on }}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: on }}
               style={({ pressed }) => [
                 { flex: 1, minHeight: 44, paddingVertical: t.space.md, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
                 on && { backgroundColor: t.surface, ...t.shadowCard },

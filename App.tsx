@@ -41,6 +41,22 @@ import CalendarScreen from './src/screens/CalendarScreen';
 import EventForm from './src/screens/EventForm';
 import Settings from './src/screens/Settings';
 
+// Anel de foco de teclado (web). `:focus-visible` só dispara na navegação por
+// teclado (Tab), então fica invisível no toque/mouse e visível para quem precisa
+// — fechando o gap de WCAG 2.4.7 nos Pressables do react-native-web de uma vez.
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  const ID = 'cultinho-focus-styles';
+  if (!document.getElementById(ID)) {
+    const el = document.createElement('style');
+    el.id = ID;
+    el.textContent =
+      '[role="button"]:focus-visible,[role="radio"]:focus-visible,[role="tab"]:focus-visible,' +
+      '[role="link"]:focus-visible,[role="checkbox"]:focus-visible,[role="switch"]:focus-visible,' +
+      'input:focus-visible,textarea:focus-visible{outline:2px solid #5b6ce0!important;outline-offset:2px!important}';
+    document.head.appendChild(el);
+  }
+}
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function BootScreen() {
