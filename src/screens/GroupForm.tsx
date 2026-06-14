@@ -48,7 +48,7 @@ export default function GroupForm() {
           options={[{ value: '', label: 'Selecione...' }, ...AUX.map((a) => ({ value: a.id, label: a.name }))]}
         />
         <Segmented label="Status" value={f.status} options={['Ativo', 'Inativo']} onChange={set('status')} />
-        <View style={{ height: 4 }} />
+        <View style={{ height: 8 }} />
         <Button variant="primary" icon={<IconCheck size={19} />} onPress={onSave}>
           Salvar grupo
         </Button>

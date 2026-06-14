@@ -34,10 +34,10 @@ export default function GroupList() {
         )}
         {grupos.map((g) => (
           <Card key={g.id} pad>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 13 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
               <GroupIcon icon={g.icon} size={48} />
               <View style={{ flex: 1 }}>
-                <Txt weight="bold" size={15.5} numberOfLines={2}>
+                <Txt weight="bold" size={16} numberOfLines={2}>
                   {g.name}
                 </Txt>
                 <Txt weight="semibold" size={12.5} color={t.inkSoft} style={{ marginTop: 2 }} numberOfLines={1}>
@@ -49,7 +49,7 @@ export default function GroupList() {
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
               <MiniStat icon={<IconUsers size={15} />} label={`${g.count} jovens`} />
             </View>
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
               <Button sm variant="secondary" style={{ flex: 1 }} onPress={() => go('GroupForm')}>
                 Editar
               </Button>

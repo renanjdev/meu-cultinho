@@ -58,7 +58,7 @@ export default function YouthList() {
         sub={`${jovens.length} cadastrados`}
         onBack={isAux ? back : undefined}
       />
-      <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8, backgroundColor: t.surface, borderBottomWidth: 1, borderBottomColor: t.line, gap: 8 }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8, backgroundColor: t.surface, borderBottomWidth: 1, borderBottomColor: t.line, gap: 8 }}>
         <SearchBar value={q} onChange={setQ} placeholder="Buscar por nome..." />
         <FilterChips options={groupOpts} value={grp} onChange={setGrp} />
         <FilterChips
@@ -86,13 +86,13 @@ export default function YouthList() {
           >
             <Avatar name={j.name} size={48} />
             <View style={{ flex: 1 }}>
-              <Txt weight="bold" size={15} numberOfLines={1}>
+              <Txt weight="bold" size={16} numberOfLines={1}>
                 {j.name}
               </Txt>
               <Txt weight="semibold" size={12.5} color={t.inkSoft} numberOfLines={1}>
                 {j.age} anos · {j.grupoShort}
               </Txt>
-              <View style={{ flexDirection: 'row', gap: 6, marginTop: 6 }}>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
                 <StatusChip kind={j.status} />
               </View>
             </View>

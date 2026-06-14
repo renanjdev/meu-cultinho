@@ -61,7 +61,7 @@ export default function Settings() {
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityState={{ disabled: !onPress }}
       style={({ pressed }) => [
-        { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 14, paddingHorizontal: 4, borderBottomWidth: 1, borderBottomColor: t.line },
+        { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 0, borderBottomWidth: 1, borderBottomColor: t.line },
         pressed && onPress && { opacity: 0.6 },
       ]}>
       <View
@@ -92,7 +92,7 @@ export default function Settings() {
       <AppBar title="Configurações" />
       <ScreenScroll contentStyle={{ paddingBottom: 24 }}>
         {/* profile */}
-        <Card pad style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <Card pad style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <Avatar name={session?.name ?? ''} size={58} />
           <View style={{ flex: 1, minWidth: 0 }}>
             <Txt weight="bold" size={17} numberOfLines={1}>
@@ -111,20 +111,20 @@ export default function Settings() {
         </Card>
 
         <SectionLabel>Congregação</SectionLabel>
-        <Card style={{ paddingHorizontal: 14, paddingVertical: 4 }}>
+        <Card style={{ paddingHorizontal: 16, paddingVertical: 4 }}>
           <Item Icon={IconBook} label="Dados da congregação" value="Central" />
           <Item Icon={IconLayers} label="Grupos" value="6" onPress={() => go('GroupList')} />
           <Item Icon={IconUser} label="Auxiliares" value="5" onPress={() => go('AuxList')} />
         </Card>
 
         <SectionLabel>Aplicativo</SectionLabel>
-        <Card style={{ paddingHorizontal: 14, paddingVertical: 4 }}>
+        <Card style={{ paddingHorizontal: 16, paddingVertical: 4 }}>
           <Item Icon={IconBell} label="Preferências e notificações" />
           <Item Icon={IconDownload} label="Backup e exportação" value="Em breve" />
           <Item Icon={IconShield} label="Segurança" />
         </Card>
 
-        <Card style={{ paddingHorizontal: 14, paddingVertical: 4, marginTop: 4 }}>
+        <Card style={{ paddingHorizontal: 16, paddingVertical: 4, marginTop: 4 }}>
           <Item Icon={IconLogout} label="Sair" danger onPress={() => { void signOut(); }} />
         </Card>
         <Txt weight="semibold" size={12} color={t.inkFaint} style={{ textAlign: 'center', marginTop: 4 }}>

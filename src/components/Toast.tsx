@@ -71,10 +71,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               {
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 8,
+                gap: t.space.sm,
                 backgroundColor: t.ink,
-                paddingVertical: 11,
-                paddingHorizontal: 18,
+                paddingVertical: t.space.md,
+                paddingHorizontal: t.space.lg,
                 borderRadius: 999,
               },
               t.shadowPop,

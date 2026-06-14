@@ -39,9 +39,9 @@ export default function LoginScreen() {
         contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 24 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
-        <View style={{ alignItems: 'center', marginBottom: 30 }}>
+        <View style={{ alignItems: 'center', marginBottom: 32 }}>
           <LogoMark size={76} />
-          <Txt weight="bold" numberOfLines={1} style={{ fontSize: 26, marginTop: 18, marginBottom: 4 }}>
+          <Txt weight="bold" numberOfLines={1} style={{ fontSize: 26, marginTop: 16, marginBottom: 4 }}>
             Meu Cultinho
           </Txt>
           <Txt weight="semibold" size={14} color={t.inkSoft}>
@@ -49,7 +49,7 @@ export default function LoginScreen() {
           </Txt>
         </View>
 
-        <View style={{ gap: 14 }}>
+        <View style={{ gap: 12 }}>
           <Field
             label="Usuário"
             value={user}
@@ -77,16 +77,16 @@ export default function LoginScreen() {
               {erro}
             </Txt>
           ) : null}
-          <View style={{ height: 4 }} />
+          <View style={{ height: 8 }} />
           <Button variant="primary" loading={busy} onPress={entrar}>
             Entrar
           </Button>
         </View>
 
-        <View style={{ marginTop: 30, alignItems: 'center' }}>
+        <View style={{ marginTop: 32, alignItems: 'center' }}>
           <Txt
             weight="semibold"
-            size={13.5}
+            size={13}
             color={t.inkSoft}
             style={{ textAlign: 'center', lineHeight: 21, maxWidth: 300 }}>
             Organize os grupos, registre presenças e acompanhe cada jovem com cuidado.

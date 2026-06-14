@@ -17,7 +17,7 @@ export default function AuxList() {
   return (
     <Screen>
       <AppBar title="Auxiliares" sub={`${auxiliares.length} cadastrados`} onBack={back} />
-      <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 12, backgroundColor: t.surface, borderBottomWidth: 1, borderBottomColor: t.line }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, backgroundColor: t.surface, borderBottomWidth: 1, borderBottomColor: t.line }}>
         <SearchBar value={q} onChange={setQ} placeholder="Buscar auxiliar..." />
       </View>
 
@@ -33,18 +33,18 @@ export default function AuxList() {
           <CardRow key={a.id} accessibilityLabel={a.name + ', ' + roleLabel + ', ' + a.status} onPress={() => go('AuxForm')}>
             <Avatar name={a.name} size={48} />
             <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={{ flex: 1 }}>
-                  <Txt weight="bold" size={15} numberOfLines={1}>
+                  <Txt weight="bold" size={16} numberOfLines={1}>
                     {a.name}
                   </Txt>
                 </View>
                 {a.role === 'cooperador' ? <Chip tone="gold">Cooperador</Chip> : null}
               </View>
-              <Txt weight="semibold" size={12.5} color={t.inkSoft} style={{ marginTop: 1 }} numberOfLines={1}>
+              <Txt weight="semibold" size={12.5} color={t.inkSoft} style={{ marginTop: 2 }} numberOfLines={1}>
                 {roleLabel}
               </Txt>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 5 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
                 <IconWhats size={14} color={t.inkSoft} />
                 <Txt weight="semibold" size={12.5} color={t.inkSoft}>
                   {a.phone}

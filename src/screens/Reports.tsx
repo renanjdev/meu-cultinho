@@ -50,7 +50,7 @@ function RankCard({
   const bg = tone === 'present' ? t.presentSoft : t.absentSoft;
   return (
     <Card pad style={{ flex: 1 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <View style={{ width: 26, height: 26, borderRadius: 9, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
           {icon}
         </View>
@@ -58,7 +58,7 @@ function RankCard({
           {title}
         </Txt>
       </View>
-      <View style={{ marginTop: 10, gap: 9 }}>
+      <View style={{ marginTop: 8, gap: 8 }}>
         {rows.length === 0 ? (
           <Txt weight="semibold" size={12} color={t.inkSoft}>
             {empty}
@@ -104,19 +104,19 @@ export default function Reports() {
         }
       />
       <ScreenScroll contentStyle={{ paddingBottom: 24 }}>
-        <View style={{ gap: 11 }}>
-          <View style={{ flexDirection: 'row', gap: 11 }}>
+        <View style={{ gap: 12 }}>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
             <StatTile num={`${data?.avgFreq ?? 0}%`} label="Frequência média" tone="primary" icon={<IconTrend {...stat(18)} />} style={{ flex: 1 }} />
             <StatTile num={data?.activeYouth ?? 0} label="Jovens ativos" tone="gold" icon={<IconUsers {...stat(18)} />} style={{ flex: 1 }} />
           </View>
-          <View style={{ flexDirection: 'row', gap: 11 }}>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
             <StatTile num={data?.totalPresent ?? 0} label="Total de presenças" tone="present" icon={<IconCheck {...stat(18)} />} style={{ flex: 1 }} />
             <StatTile num={data?.totalAbsent ?? 0} label="Total de faltas" tone="absent" icon={<IconX {...stat(18)} />} style={{ flex: 1 }} />
           </View>
         </View>
 
         {!hasData ? (
-          <Card pad style={{ marginTop: 16, alignItems: 'center', gap: 6, paddingVertical: 26 }}>
+          <Card pad style={{ marginTop: 16, alignItems: 'center', gap: 8, paddingVertical: 26 }}>
             <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: t.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
               <IconChart size={22} color={t.primary} />
             </View>
@@ -132,7 +132,7 @@ export default function Reports() {
         ) : (
           <>
             <SectionLabel>Presença por grupo</SectionLabel>
-            <Card pad style={{ gap: 14 }}>
+            <Card pad style={{ gap: 12 }}>
               {data!.byGroup.map((g) => (
                 <View key={g.id}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -148,7 +148,7 @@ export default function Reports() {
               ))}
             </Card>
 
-            <View style={{ flexDirection: 'row', gap: 11 }}>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
               <RankCard
                 title="Mais frequentes"
                 tone="present"

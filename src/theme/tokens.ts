@@ -61,6 +61,11 @@ export interface Theme {
   radiusBtn: number;
   radiusField: number;
 
+  // spacing scale — single source of truth for padding/gap/margin.
+  // Structural one-offs (AppBar minHeight, bottom-nav pill, modal radius) stay
+  // inline on purpose: they're dimensions, not rhythm.
+  space: { xs: number; sm: number; md: number; lg: number; xl: number; xxl: number };
+
   // type — maps a logical weight to a loaded Google Font family
   font: Record<FontWeightName, string>;
 
@@ -132,6 +137,7 @@ export const THEMES: Record<ThemeName, Theme> = {
     radiusCard: 26,
     radiusBtn: 18,
     radiusField: 16,
+    space: { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 },
     font: {
       // Dialed down two steps from the prototype's heavy 700 so the rounded
       // Fredoka reads softer: "bold" emphasis now renders at Medium (500), the

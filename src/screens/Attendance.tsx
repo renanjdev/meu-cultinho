@@ -85,7 +85,7 @@ export default function Attendance() {
       <AppBar title="Registrar Frequência" onBack={back} />
 
       {/* controls */}
-      <View style={{ paddingHorizontal: 16, paddingVertical: 12, backgroundColor: t.surface, borderBottomWidth: 1, borderBottomColor: t.line, gap: 10 }}>
+      <View style={{ paddingHorizontal: 16, paddingVertical: 12, backgroundColor: t.surface, borderBottomWidth: 1, borderBottomColor: t.line, gap: 12 }}>
         <Field label="Data da reunião" value={isoToBR(dateISO)} editable={false} icon={<IconCalendar size={17} />} />
         <SelectField label="Grupo" value={grp} onChange={setGrp} options={grupos.map((g) => ({ value: g.id, label: g.name }))} />
         <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -100,7 +100,7 @@ export default function Attendance() {
       <ScrollView
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 96 }}>
+        contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 96 }}>
         {roster.length === 0 ? (
           <Txt weight="semibold" color={t.inkSoft} style={{ textAlign: 'center', paddingVertical: 30 }}>
             Nenhum jovem ativo neste grupo.
@@ -119,7 +119,7 @@ export default function Attendance() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <Avatar name={j.name} size={46} />
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Txt weight="bold" size={15} numberOfLines={1}>
+                  <Txt weight="bold" size={16} numberOfLines={1}>
                     {j.name}
                   </Txt>
                   <Txt weight="semibold" size={12.5} color={t.inkSoft}>
@@ -133,7 +133,7 @@ export default function Attendance() {
                   <IconNote size={18} color={t.inkSoft} />
                 </IconButton>
               </View>
-              <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
                 <MarkBtn active={st === 'present'} kind="present" onPress={() => mark(j.id, 'present')} />
                 <MarkBtn active={st === 'absent'} kind="absent" onPress={() => mark(j.id, 'absent')} />
               </View>

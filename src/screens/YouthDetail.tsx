@@ -42,7 +42,7 @@ export default function YouthDetail() {
   const { jovem: j } = useJovem(route.params?.id);
   const [confirm, setConfirm] = useState(false);
 
-  const divider = <View style={{ height: 1, backgroundColor: t.line, marginVertical: 11 }} />;
+  const divider = <View style={{ height: 1, backgroundColor: t.line, marginVertical: 12 }} />;
 
   if (!j) {
     return (
@@ -83,7 +83,7 @@ export default function YouthDetail() {
           end={{ x: 0.7, y: 1 }}
           style={{ alignItems: 'center', paddingHorizontal: 16, paddingTop: 20, paddingBottom: 18 }}>
           <Avatar name={j.name} size={86} />
-          <Txt weight="bold" size={21} style={{ marginTop: 14, marginBottom: 3, textAlign: 'center' }}>
+          <Txt weight="bold" size={21} style={{ marginTop: 14, marginBottom: 4, textAlign: 'center' }}>
             {j.name}
           </Txt>
           <Txt weight="semibold" size={13.5} color={t.inkSoft} numberOfLines={1}>
@@ -94,9 +94,9 @@ export default function YouthDetail() {
           </View>
         </LinearGradient>
 
-        <View style={{ padding: 16, gap: 14 }}>
+        <View style={{ padding: 16, gap: 12 }}>
           {/* stats */}
-          <View style={{ flexDirection: 'row', gap: 10 }}>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
             <StatTile num={0} label="Presenças" tone="present" style={{ flex: 1 }} />
             <StatTile num={0} label="Faltas" tone="absent" style={{ flex: 1 }} />
             <StatTile num="—" label="Frequência" tone="primary" style={{ flex: 1 }} />
@@ -149,7 +149,7 @@ export default function YouthDetail() {
             <Txt color={t.inkSoft}>Sem registros ainda.</Txt>
           </Card>
 
-          <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 4 }}>
             <Button variant="secondary" icon={<IconEdit size={18} />} style={{ flex: 1 }} onPress={() => go('YouthForm', { id: j.id })}>
               Editar
             </Button>
