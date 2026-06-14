@@ -58,8 +58,9 @@ export default function Settings() {
         await refresh();
         show('Foto atualizada');
       }
-    } catch {
-      show('Erro ao enviar a foto');
+    } catch (e: any) {
+      console.error('[foto perfil]', e);
+      show('Falha: ' + String(e?.message || e?.error || e || 'erro').slice(0, 110));
     } finally {
       setPhotoBusy(false);
     }
