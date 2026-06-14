@@ -17,6 +17,7 @@ import React, {
 } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -191,14 +192,37 @@ export function CardRow({
 }
 
 /* ------------------------------------------------------------------- Avatar */
-export function Avatar({ name, size = 44, color }: { name: string; size?: number; color?: string }) {
+export function Avatar({
+  name,
+  size = 44,
+  color,
+  photoUrl,
+}: {
+  name: string;
+  size?: number;
+  color?: string;
+  photoUrl?: string;
+}) {
   const t = useTheme();
+  // Decorative: the person's name is always shown next to the avatar, so the
+  // initials/photo add only noise to the accessibility tree.
+  const a11y = {
+    accessibilityElementsHidden: true,
+    importantForAccessibility: 'no-hide-descendants' as const,
+  };
+  if (photoUrl) {
+    return (
+      <Image
+        {...a11y}
+        source={{ uri: photoUrl }}
+        resizeMode="cover"
+        style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: t.surface2 }}
+      />
+    );
+  }
   return (
     <View
-      // Decorative: the person's name is always shown next to the avatar, so
-      // the bare initials add only noise to the accessibility tree.
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
+      {...a11y}
       style={{
         width: size,
         height: size,

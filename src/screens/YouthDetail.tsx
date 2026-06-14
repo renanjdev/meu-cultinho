@@ -82,7 +82,7 @@ export default function YouthDetail() {
           start={{ x: 0.3, y: 0 }}
           end={{ x: 0.7, y: 1 }}
           style={{ alignItems: 'center', paddingHorizontal: 16, paddingTop: 20, paddingBottom: 18 }}>
-          <Avatar name={j.name} size={86} />
+          <Avatar name={j.name} size={86} photoUrl={j.photoUrl} />
           <Txt weight="bold" size={21} style={{ marginTop: 14, marginBottom: 4, textAlign: 'center' }}>
             {j.name}
           </Txt>

@@ -209,7 +209,7 @@ export default function CalendarScreen() {
               const turning = sy - Number(b.birth.slice(6, 10));
               return (
                 <View key={`${b.name}-${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: t.space.md }}>
-                  <Avatar name={b.name} size={40} />
+                  <Avatar name={b.name} size={40} photoUrl={b.photoUrl} />
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <Txt weight="bold" size={15} numberOfLines={1}>
                       {b.name}
