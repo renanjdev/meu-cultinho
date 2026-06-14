@@ -19,6 +19,7 @@ export default function AuxForm() {
   const { go, back } = useNav();
   const [f, setF] = useState<Partial<Aux> & { pass?: string }>({ role: 'Auxiliar', status: 'Ativo' });
   const set = (k: keyof Aux | 'pass') => (v: string) => setF((s) => ({ ...s, [k]: v }));
+  const canSave = !!f.name?.trim() && !!f.user?.trim() && !!f.pass?.trim();
 
   return (
     <Screen>
@@ -52,7 +53,7 @@ export default function AuxForm() {
         <Segmented label="Status" value={f.status} options={['Ativo', 'Inativo']} onChange={set('status')} />
 
         <View style={{ height: 4 }} />
-        <Button variant="primary" icon={<IconCheck size={19} />} onPress={() => go('AuxList')}>
+        <Button variant="primary" icon={<IconCheck size={19} />} disabled={!canSave} onPress={() => go('AuxList')}>
           Salvar auxiliar
         </Button>
         <Button variant="ghost" onPress={back}>

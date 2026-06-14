@@ -2,10 +2,9 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
-import { useAuth } from '../hooks/useAuth';
+import { useSession } from '../state/session';
 import { useNav } from '../navigation/useNav';
-import { useYouthStore } from '../state/youthStore';
-import { GROUPS, groupShort } from '../data/seed';
+import { useJovens, useGrupos } from '../data/repo';
 import {
   AppBar,
   Avatar,
@@ -31,22 +30,23 @@ import {
 
 export default function YouthList() {
   const t = useTheme();
-  const { session } = useAuth();
+  const { session } = useSession();
   const isAux = session?.role === 'auxiliar';
   const { go, back } = useNav();
-  const all = useYouthStore();
+  const { jovens } = useJovens();
+  const { grupos } = useGrupos();
   const [q, setQ] = useState('');
   const [grp, setGrp] = useState('all');
   const [status, setStatus] = useState('all');
 
   const groupOpts: Option[] = [
     { value: 'all', label: 'Todos os grupos' },
-    ...GROUPS.map((g) => ({ value: g.id, label: g.short })),
+    ...grupos.map((g) => ({ value: g.id, label: g.short })),
   ];
 
-  const list = all.filter(
+  const list = jovens.filter(
     (j) =>
-      (grp === 'all' || j.group === grp) &&
+      (grp === 'all' || j.grupoId === grp) &&
       (status === 'all' || j.status === status) &&
       j.name.toLowerCase().includes(q.toLowerCase()),
   );
@@ -55,7 +55,7 @@ export default function YouthList() {
     <Screen>
       <AppBar
         title="Jovens e Menores"
-        sub={`${all.length} cadastrados`}
+        sub={`${jovens.length} cadastrados`}
         onBack={isAux ? back : undefined}
       />
       <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8, backgroundColor: t.surface, borderBottomWidth: 1, borderBottomColor: t.line, gap: 8 }}>
@@ -72,25 +72,28 @@ export default function YouthList() {
         />
       </View>
 
-      <ScreenScroll contentStyle={{ paddingBottom: 96 }}>
+      <ScreenScroll contentStyle={{ paddingBottom: 120 }}>
         {list.length === 0 ? (
-          <Txt weight="semibold" color={t.inkFaint} style={{ textAlign: 'center', padding: 30 }}>
+          <Txt weight="semibold" color={t.inkSoft} style={{ textAlign: 'center', padding: 30 }}>
             Nenhum jovem encontrado.
           </Txt>
         ) : null}
         {list.map((j) => (
-          <CardRow key={j.id} onPress={() => go('YouthDetail', { id: j.id })}>
+          <CardRow
+            key={j.id}
+            onPress={() => go('YouthDetail', { id: j.id })}
+            accessibilityLabel={`${j.name}, ${j.age} anos, ${j.grupoShort}`}
+          >
             <Avatar name={j.name} size={48} />
             <View style={{ flex: 1 }}>
               <Txt weight="bold" size={15} numberOfLines={1}>
                 {j.name}
               </Txt>
               <Txt weight="semibold" size={12.5} color={t.inkSoft} numberOfLines={1}>
-                {j.age} anos · {groupShort(j.group)}
+                {j.age} anos · {j.grupoShort}
               </Txt>
               <View style={{ flexDirection: 'row', gap: 6, marginTop: 6 }}>
                 <StatusChip kind={j.status} />
-                <StatusChip kind={j.last} />
               </View>
             </View>
             <IconChevR size={20} color={t.ink} opacity={0.4} />

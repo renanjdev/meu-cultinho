@@ -1,19 +1,15 @@
 /** 15. Configurações — profile, theme switcher, congregation, app, logout. */
 import React, { type ComponentType } from 'react';
 import { Pressable, View } from 'react-native';
-import { useApp, useTheme } from '../theme/ThemeProvider';
-import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../theme/ThemeProvider';
+import { useSession } from '../state/session';
 import { useNav } from '../navigation/useNav';
-import { signOutUser } from '../services/auth';
-import { AUX } from '../data/seed';
-import type { ThemeName } from '../theme/tokens';
 import {
   AppBar,
   Avatar,
   BottomNav,
   Card,
   Chip,
-  FilterChips,
   IconButton,
   Screen,
   ScreenScroll,
@@ -39,19 +35,12 @@ import {
   type IconProps,
 } from '../components/Icons';
 
-const THEME_OPTIONS: { value: ThemeName; label: string }[] = [
-  { value: 'sereno', label: 'Sereno' },
-  { value: 'jardim', label: 'Jardim' },
-  { value: 'aconchego', label: 'Aconchego' },
-];
-
 export default function Settings() {
   const t = useTheme();
-  const { themeName, setThemeName } = useApp();
-  const { session } = useAuth();
+  const { session, signOut } = useSession();
   const isAux = session?.role === 'auxiliar';
   const { go } = useNav();
-  const me = isAux ? AUX[1] : AUX[0];
+  const roleLabel = isAux ? 'Auxiliar' : 'Cooperador';
 
   const Item = ({
     Icon,
@@ -68,9 +57,12 @@ export default function Settings() {
   }) => (
     <Pressable
       onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityState={{ disabled: !onPress }}
       style={({ pressed }) => [
         { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 14, paddingHorizontal: 4, borderBottomWidth: 1, borderBottomColor: t.line },
-        pressed && { opacity: 0.6 },
+        pressed && onPress && { opacity: 0.6 },
       ]}>
       <View
         style={{
@@ -83,7 +75,7 @@ export default function Settings() {
         }}>
         <Icon size={19} color={danger ? t.absent : t.primary} />
       </View>
-      <Txt weight="bold" size={14.5} color={danger ? t.absent : t.ink} style={{ flex: 1 }}>
+      <Txt weight="bold" size={14.5} color={danger ? t.absentDeep : t.ink} style={{ flex: 1 }}>
         {label}
       </Txt>
       {value ? (
@@ -91,7 +83,7 @@ export default function Settings() {
           {value}
         </Txt>
       ) : null}
-      {!danger ? <IconChevR size={18} color={t.ink} opacity={0.4} /> : null}
+      {!danger && onPress ? <IconChevR size={18} color={t.ink} opacity={0.4} /> : null}
     </Pressable>
   );
 
@@ -101,26 +93,22 @@ export default function Settings() {
       <ScreenScroll contentStyle={{ paddingBottom: 24 }}>
         {/* profile */}
         <Card pad style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <Avatar name={me.name} size={58} />
-          <View style={{ flex: 1 }}>
-            <Txt weight="bold" size={17}>
-              {me.name}
+          <Avatar name={session?.name ?? ''} size={58} />
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Txt weight="bold" size={17} numberOfLines={1}>
+              {session?.name ?? ''}
             </Txt>
-            <Txt weight="semibold" size={13} color={t.inkSoft}>
-              {me.group}
+            <Txt weight="semibold" size={13} color={t.inkSoft} numberOfLines={1}>
+              {isAux ? 'Auxiliar' : 'Cooperador de jovens e menores'}
             </Txt>
             <View style={{ marginTop: 6 }}>
-              <Chip tone={me.role === 'Administrador' ? 'gold' : 'primary'}>{me.role}</Chip>
+              <Chip tone={isAux ? 'primary' : 'gold'}>{roleLabel}</Chip>
             </View>
           </View>
-          <IconButton soft onPress={() => go('AuxForm')}>
+          <IconButton soft onPress={() => go('AuxForm')} accessibilityLabel="Editar perfil">
             <IconEdit size={18} color={t.primary} />
           </IconButton>
         </Card>
-
-        {/* theme switcher — replaces the design tool's Tweaks panel */}
-        <SectionLabel>Identidade visual</SectionLabel>
-        <FilterChips options={THEME_OPTIONS} value={themeName} onChange={(v) => setThemeName(v as ThemeName)} />
 
         <SectionLabel>Congregação</SectionLabel>
         <Card style={{ paddingHorizontal: 14, paddingVertical: 4 }}>
@@ -137,7 +125,7 @@ export default function Settings() {
         </Card>
 
         <Card style={{ paddingHorizontal: 14, paddingVertical: 4, marginTop: 4 }}>
-          <Item Icon={IconLogout} label="Sair" danger onPress={() => { void signOutUser(); }} />
+          <Item Icon={IconLogout} label="Sair" danger onPress={() => { void signOut(); }} />
         </Card>
         <Txt weight="semibold" size={12} color={t.inkFaint} style={{ textAlign: 'center', marginTop: 4 }}>
           Meu Cultinho · versão 1.0

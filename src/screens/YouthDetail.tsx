@@ -1,12 +1,12 @@
 /** 7. Detalhes do Jovem — hero, stats, guardian info, recent history, delete. */
 import React, { useState } from 'react';
-import { View } from 'react-native';
+import { Linking, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRoute, type RouteProp } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useNav } from '../navigation/useNav';
-import { deleteYouth, getYouth } from '../state/youthStore';
-import { YOUTH, groupName, type AttendanceMark } from '../data/seed';
+import { useJovem, deleteJovem } from '../data/repo';
+import { ageFrom } from '../data/age';
 import type { RootStackParamList } from '../navigation/types';
 import {
   AppBar,
@@ -24,29 +24,45 @@ import {
   Txt,
 } from '../components/ui';
 import {
+  IconCalendar,
+  IconCheckCircle,
   IconClock,
   IconEdit,
   IconMapPin,
   IconUser,
   IconWhats,
   IconX,
+  IconXCircle,
 } from '../components/Icons';
-
-const RECENT: [string, AttendanceMark][] = [
-  ['02 jun', 'Presente'],
-  ['26 mai', 'Falta'],
-  ['19 mai', 'Presente'],
-  ['12 mai', 'Presente'],
-];
 
 export default function YouthDetail() {
   const t = useTheme();
   const { go, back } = useNav();
   const route = useRoute<RouteProp<RootStackParamList, 'YouthDetail'>>();
-  const j = getYouth(route.params?.id) ?? YOUTH[2];
+  const { jovem: j } = useJovem(route.params?.id);
   const [confirm, setConfirm] = useState(false);
 
   const divider = <View style={{ height: 1, backgroundColor: t.line, marginVertical: 11 }} />;
+
+  if (!j) {
+    return (
+      <Screen>
+        <AppBar title="Detalhes do Jovem" onBack={back} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <Txt color={t.inkSoft}>Jovem não encontrado.</Txt>
+        </View>
+      </Screen>
+    );
+  }
+
+  // "há X anos" desde o batismo (só quando batizado e com data válida).
+  const tempoBatismo = (() => {
+    if (!j.batizado || !j.batismo) return '';
+    const anos = ageFrom(j.batismo);
+    if (anos < 0) return ''; // data futura/erro de digitação: mostra só a data
+    if (anos === 0) return 'há menos de 1 ano';
+    return `há ${anos} ano${anos > 1 ? 's' : ''}`;
+  })();
 
   return (
     <Screen>
@@ -54,7 +70,7 @@ export default function YouthDetail() {
         title="Detalhes do Jovem"
         onBack={back}
         right={
-          <IconButton soft onPress={() => go('YouthForm', { id: j.id })}>
+          <IconButton soft accessibilityLabel="Editar" onPress={() => go('YouthForm', { id: j.id })}>
             <IconEdit size={19} color={t.primary} />
           </IconButton>
         }
@@ -70,8 +86,8 @@ export default function YouthDetail() {
           <Txt weight="bold" size={21} style={{ marginTop: 14, marginBottom: 3, textAlign: 'center' }}>
             {j.name}
           </Txt>
-          <Txt weight="semibold" size={13.5} color={t.inkSoft}>
-            {j.age} anos · {groupName(j.group)}
+          <Txt weight="semibold" size={13.5} color={t.inkSoft} numberOfLines={1}>
+            {j.age} anos · {j.grupoName}
           </Txt>
           <View style={{ marginTop: 10 }}>
             <StatusChip kind={j.status} />
@@ -81,10 +97,29 @@ export default function YouthDetail() {
         <View style={{ padding: 16, gap: 14 }}>
           {/* stats */}
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <StatTile num={j.present} label="Presenças" tone="present" style={{ flex: 1 }} />
-            <StatTile num={j.absent} label="Faltas" tone="absent" style={{ flex: 1 }} />
-            <StatTile num={`${j.freq}%`} label="Frequência" tone="primary" style={{ flex: 1 }} />
+            <StatTile num={0} label="Presenças" tone="present" style={{ flex: 1 }} />
+            <StatTile num={0} label="Faltas" tone="absent" style={{ flex: 1 }} />
+            <StatTile num="—" label="Frequência" tone="primary" style={{ flex: 1 }} />
           </View>
+
+          <SectionLabel>Batismo</SectionLabel>
+          <Card pad>
+            <InfoRow
+              icon={j.batizado ? <IconCheckCircle size={18} /> : <IconXCircle size={18} />}
+              label="Situação"
+              value={j.batizado ? 'Batizado' : 'Não batizado'}
+            />
+            {j.batizado ? (
+              <>
+                {divider}
+                <InfoRow
+                  icon={<IconCalendar size={18} />}
+                  label="Data do batismo"
+                  value={j.batismo ? `${j.batismo}${tempoBatismo ? ` · ${tempoBatismo}` : ''}` : 'Não informada'}
+                />
+              </>
+            ) : null}
+          </Card>
 
           <SectionLabel>Dados do responsável</SectionLabel>
           <Card pad>
@@ -97,7 +132,10 @@ export default function YouthDetail() {
               label="WhatsApp"
               value={j.phone}
               action={
-                <Button sm variant="secondary">
+                <Button
+                  sm
+                  variant="secondary"
+                  onPress={() => Linking.openURL('https://wa.me/55' + j.phone.replace(/\D/g, ''))}>
                   Chamar
                 </Button>
               }
@@ -108,17 +146,7 @@ export default function YouthDetail() {
 
           <SectionLabel>Histórico recente</SectionLabel>
           <Card pad>
-            {RECENT.map(([date, mark], i) => (
-              <View key={date}>
-                {i > 0 ? divider : null}
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Txt weight="bold" size={14}>
-                    {date}
-                  </Txt>
-                  <StatusChip kind={mark} />
-                </View>
-              </View>
-            ))}
+            <Txt color={t.inkSoft}>Sem registros ainda.</Txt>
           </Card>
 
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
@@ -126,7 +154,7 @@ export default function YouthDetail() {
               Editar
             </Button>
             <Button variant="primary" icon={<IconClock size={18} />} style={{ flex: 1 }} onPress={() => go('History')}>
-              Histórico completo
+              Histórico
             </Button>
           </View>
           <Button variant="danger-soft" icon={<IconX size={18} />} onPress={() => setConfirm(true)}>
@@ -142,9 +170,9 @@ export default function YouthDetail() {
         message={`${j.name} será removido(a) da lista. Esta ação não pode ser desfeita.`}
         confirmLabel="Excluir"
         onCancel={() => setConfirm(false)}
-        onConfirm={() => {
+        onConfirm={async () => {
           setConfirm(false);
-          deleteYouth(j.id);
+          await deleteJovem(j.id);
           go('YouthList');
         }}
       />

@@ -2,8 +2,10 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
+import { useSession } from '../state/session';
 import { useNav } from '../navigation/useNav';
-import { GROUPS } from '../data/seed';
+import { useToast } from '../components/Toast';
+import { useGrupos } from '../data/repo';
 import {
   Avatar,
   BottomNav,
@@ -27,13 +29,15 @@ import {
   IconUsers,
 } from '../components/Icons';
 
-const GOLD_INK = '#a06f10';
-
 export default function AuxHome() {
   const t = useTheme();
+  const { session } = useSession();
   const { go } = useNav();
+  const { show } = useToast();
+  const firstName = session?.name?.split(' ')[0] ?? 'Auxiliar';
 
-  const myGroups = [GROUPS[4], GROUPS[2]]; // Moços, Meninos até 12
+  const { grupos } = useGrupos();
+  const myGroups = grupos.slice(0, 2); // placeholder: auxiliar's assigned groups
 
   return (
     <Screen>
@@ -49,16 +53,16 @@ export default function AuxHome() {
           borderBottomWidth: 1,
           borderBottomColor: t.line,
         }}>
-        <Avatar name="Lucas Souza" size={42} />
+        <Avatar name={session?.name ?? 'Auxiliar'} size={42} />
         <View style={{ flex: 1 }}>
-          <Txt weight="bold" size={18}>
-            Olá, Lucas 👋
+          <Txt weight="bold" size={18} numberOfLines={1}>
+            Olá, {firstName} 👋
           </Txt>
-          <Txt weight="semibold" size={12.5} color={t.inkSoft}>
+          <Txt weight="semibold" size={12.5} color={t.inkSoft} numberOfLines={1}>
             Seus grupos sob responsabilidade
           </Txt>
         </View>
-        <IconButton soft>
+        <IconButton soft accessibilityLabel="Notificações" onPress={() => show('Em breve')}>
           <IconBell size={21} color={t.primary} />
         </IconButton>
       </View>
@@ -75,20 +79,20 @@ export default function AuxHome() {
               width: 40,
               height: 40,
               borderRadius: 12,
-              backgroundColor: 'rgba(217,154,43,0.18)',
+              backgroundColor: 'rgba(239,176,42,0.20)',
               alignItems: 'center',
               justifyContent: 'center',
             }}>
             <IconAlert size={22} color={t.gold} />
           </View>
           <View style={{ flex: 1 }}>
-            <Txt weight="bold" size={14.5} color={GOLD_INK}>
+            <Txt weight="bold" size={14.5} color={t.goldDeep}>
               Frequência pendente
             </Txt>
-            <Txt weight="semibold" size={13} color={GOLD_INK} style={{ lineHeight: 19, marginTop: 2 }}>
+            <Txt weight="semibold" size={13} color={t.goldDeep} style={{ lineHeight: 19, marginTop: 2 }}>
               Há jovens sem frequência registrada na última reunião.
             </Txt>
-            <Button sm bg={t.gold} fg="#fff" style={{ marginTop: 10 }} onPress={() => go('Attendance')}>
+            <Button sm bg={t.gold} fg={t.ink} style={{ marginTop: 10 }} onPress={() => go('Attendance')}>
               Registrar agora
             </Button>
           </View>
@@ -96,7 +100,15 @@ export default function AuxHome() {
 
         <SectionLabel>Ações rápidas</SectionLabel>
         <View style={{ flexDirection: 'row', gap: 11 }}>
-          <Pressable style={{ flex: 1 }} onPress={() => go('YouthForm')}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Cadastrar jovem"
+            style={({ pressed }) => ({
+              flex: 1,
+              opacity: pressed ? 0.95 : 1,
+              transform: [{ scale: pressed ? 0.97 : 1 }],
+            })}
+            onPress={() => go('YouthForm')}>
             <Card pad style={{ gap: 9 }}>
               <View
                 style={{
@@ -114,7 +126,15 @@ export default function AuxHome() {
               </Txt>
             </Card>
           </Pressable>
-          <Pressable style={{ flex: 1 }} onPress={() => go('YouthList')}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Ver jovens"
+            style={({ pressed }) => ({
+              flex: 1,
+              opacity: pressed ? 0.95 : 1,
+              transform: [{ scale: pressed ? 0.97 : 1 }],
+            })}
+            onPress={() => go('YouthList')}>
             <Card pad style={{ gap: 9 }}>
               <View
                 style={{
@@ -141,10 +161,10 @@ export default function AuxHome() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13 }}>
                 <GroupIcon icon={g.icon} />
                 <View style={{ flex: 1 }}>
-                  <Txt weight="bold" size={15.5}>
+                  <Txt weight="bold" size={15.5} numberOfLines={1}>
                     {g.name}
                   </Txt>
-                  <Txt weight="semibold" size={12.5} color={t.inkSoft}>
+                  <Txt weight="semibold" size={12.5} color={t.inkSoft} numberOfLines={1}>
                     {g.count} jovens
                   </Txt>
                 </View>
@@ -152,7 +172,7 @@ export default function AuxHome() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 }}>
                 <IconClock size={15} color={t.inkSoft} />
                 <Txt weight="semibold" size={12.5} color={t.inkSoft}>
-                  Última frequência: {g.last}
+                  Última frequência: —
                 </Txt>
               </View>
               <Button variant="secondary" icon={<IconClipboard size={18} />} style={{ marginTop: 12 }} onPress={() => go('Attendance', { group: g.id })}>

@@ -1,15 +1,24 @@
 /**
- * 12. Registrar Frequência — the centerpiece.
+ * 12. Registrar Frequência — the centerpiece (real, persisted).
  * Big Presente/Falta buttons; the card turns soft-green or soft-red on mark.
- * Designed so a helper can record presence fast, without thinking.
+ * Each tap writes to the `presencas` table immediately (optimistic UI).
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useRoute, type RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 import { useNav } from '../navigation/useNav';
-import { GROUPS, YOUTH } from '../data/seed';
+import { useSession } from '../state/session';
+import {
+  useGrupos,
+  useJovens,
+  useMarks,
+  setMark,
+  todayISO,
+  isoToBR,
+  type Mark,
+} from '../data/repo';
 import type { RootStackParamList } from '../navigation/types';
 import {
   AppBar,
@@ -25,24 +34,51 @@ import {
   Txt,
 } from '../components/ui';
 import { IconCalendar, IconCheck, IconNote } from '../components/Icons';
-
-type Mark = 'present' | 'absent';
+import { useToast } from '../components/Toast';
 
 export default function Attendance() {
   const t = useTheme();
+  const { show } = useToast();
   const insets = useSafeAreaInsets();
   const { go, back } = useNav();
+  const { session } = useSession();
   const route = useRoute<RouteProp<RootStackParamList, 'Attendance'>>();
-  const [grp, setGrp] = useState(route.params?.group ?? 'g5');
-  const roster = useMemo(() => YOUTH.filter((j) => j.group === grp && j.status === 'Ativo'), [grp]);
-  const [marks, setMarks] = useState<Record<string, Mark | undefined>>({});
 
-  useEffect(() => setMarks({}), [grp]);
+  const dateISO = todayISO();
+  const { grupos } = useGrupos();
+  const { jovens } = useJovens();
+  const [grp, setGrp] = useState(route.params?.group ?? '');
+
+  // Default to the first group once groups load (or if the param isn't valid).
+  useEffect(() => {
+    if (grupos.length && !grupos.some((g) => g.id === grp)) {
+      setGrp(grupos[0].id);
+    }
+  }, [grupos, grp]);
+
+  const roster = jovens.filter((j) => j.grupoId === grp && j.status === 'Ativo');
+  const { marks, setMarks, reload } = useMarks(dateISO, grp || undefined);
 
   const present = Object.values(marks).filter((v) => v === 'present').length;
   const absent = Object.values(marks).filter((v) => v === 'absent').length;
   const pending = roster.length - present - absent;
-  const mark = (id: string, v: Mark) => setMarks((m) => ({ ...m, [id]: m[id] === v ? undefined : v }));
+
+  // Toggle + persist. Tapping the active mark again clears it (deletes the row).
+  const mark = async (id: string, v: Mark) => {
+    const next: Mark | null = marks[id] === v ? null : v;
+    setMarks((m) => {
+      const c = { ...m };
+      if (next === null) delete c[id];
+      else c[id] = next;
+      return c;
+    });
+    try {
+      await setMark(dateISO, grp, id, next, session?.userId);
+    } catch {
+      show('Erro ao salvar a presença');
+      void reload();
+    }
+  };
 
   return (
     <Screen>
@@ -50,8 +86,8 @@ export default function Attendance() {
 
       {/* controls */}
       <View style={{ paddingHorizontal: 16, paddingVertical: 12, backgroundColor: t.surface, borderBottomWidth: 1, borderBottomColor: t.line, gap: 10 }}>
-        <Field label="Data da reunião" value="08/06/2025" editable={false} icon={<IconCalendar size={17} />} />
-        <SelectField label="Grupo" value={grp} onChange={setGrp} options={GROUPS.map((g) => ({ value: g.id, label: g.name }))} />
+        <Field label="Data da reunião" value={isoToBR(dateISO)} editable={false} icon={<IconCalendar size={17} />} />
+        <SelectField label="Grupo" value={grp} onChange={setGrp} options={grupos.map((g) => ({ value: g.id, label: g.name }))} />
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <SumPill num={roster.length} label="Total" tone="ink" />
           <SumPill num={present} label="Presentes" tone="present" />
@@ -65,6 +101,11 @@ export default function Attendance() {
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 96 }}>
+        {roster.length === 0 ? (
+          <Txt weight="semibold" color={t.inkSoft} style={{ textAlign: 'center', paddingVertical: 30 }}>
+            Nenhum jovem ativo neste grupo.
+          </Txt>
+        ) : null}
         {roster.map((j) => {
           const st = marks[j.id];
           const cardStyle =
@@ -77,7 +118,7 @@ export default function Attendance() {
             <Card key={j.id} pad style={cardStyle}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <Avatar name={j.name} size={46} />
-                <View style={{ flex: 1 }}>
+                <View style={{ flex: 1, minWidth: 0 }}>
                   <Txt weight="bold" size={15} numberOfLines={1}>
                     {j.name}
                   </Txt>
@@ -85,7 +126,10 @@ export default function Attendance() {
                     {j.age} anos
                   </Txt>
                 </View>
-                <IconButton style={{ width: 38, height: 38, backgroundColor: t.surface2 }}>
+                <IconButton
+                  accessibilityLabel="Observação"
+                  onPress={() => show('Em breve')}
+                  style={{ width: 44, height: 44, backgroundColor: t.surface2 }}>
                   <IconNote size={18} color={t.inkSoft} />
                 </IconButton>
               </View>
@@ -98,7 +142,7 @@ export default function Attendance() {
         })}
       </ScrollView>
 
-      {/* sticky save */}
+      {/* sticky finish */}
       <View
         style={{
           paddingHorizontal: 16,
@@ -108,7 +152,14 @@ export default function Attendance() {
           borderTopWidth: 1,
           borderTopColor: t.line,
         }}>
-        <Button variant="primary" icon={<IconCheck size={19} />} onPress={() => go('History')}>
+        <Button
+          variant="primary"
+          icon={<IconCheck size={19} />}
+          onPress={() => {
+            show('Presenças salvas');
+            if (back) back();
+            else go('AdminHome');
+          }}>
           {pending > 0 ? `Salvar frequência · ${pending} pendente${pending > 1 ? 's' : ''}` : 'Salvar frequência'}
         </Button>
       </View>

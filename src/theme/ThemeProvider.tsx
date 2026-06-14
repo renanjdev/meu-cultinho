@@ -1,35 +1,22 @@
 /**
  * theme/ThemeProvider.tsx — app-wide theme context.
  *
- * Replaces the prototype's [data-theme] attribute. The Tweaks panel from the
- * design tool is gone; theme selection now lives in the Configurações screen.
- * The signed-in user's role is provided by `useAuth`, not this context.
+ * The app ships a single visual identity (Aconchego); there is no theme
+ * switching. The signed-in user's role/session lives in state/session.tsx.
  */
-import React, {
-  createContext,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
-import { DEFAULT_THEME, THEMES, type Theme, type ThemeName } from './tokens';
+import React, { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { DEFAULT_THEME, THEMES, type Theme } from './tokens';
 
 interface AppContextValue {
   theme: Theme;
-  themeName: ThemeName;
-  setThemeName: (name: ThemeName) => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
 
+const THEME = THEMES[DEFAULT_THEME];
+
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [themeName, setThemeName] = useState<ThemeName>(DEFAULT_THEME);
-
-  const value = useMemo<AppContextValue>(
-    () => ({ theme: THEMES[themeName], themeName, setThemeName }),
-    [themeName],
-  );
-
+  const value = useMemo<AppContextValue>(() => ({ theme: THEME }), []);
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 

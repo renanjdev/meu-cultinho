@@ -1,21 +1,37 @@
-/** 2. Login — signs in with Firebase; the auth gate handles routing on success. */
+/** 2. Login — real auth via Supabase (usuário + senha). */
 import React, { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
-import { signIn } from '../services/auth';
-import { seedFirestore } from '../data/seedFirestore';
-import { Button, Field, LogoMark, Link, Screen, Txt } from '../components/ui';
+import { useSession } from '../state/session';
+import { useToast } from '../components/Toast';
+import { Button, Field, Link, LogoMark, Screen, Txt } from '../components/ui';
 import { IconLock, IconUser } from '../components/Icons';
-
-type SeedState = 'idle' | 'running' | 'done' | 'error';
 
 export default function LoginScreen() {
   const t = useTheme();
-  const [user, setUser] = useState('renan.j');
-  const [pass, setPass] = useState('••••••••');
+  const { signIn } = useSession();
+  const { show } = useToast();
+  const [user, setUser] = useState('renan');
+  const [pass, setPass] = useState('');
   const [erro, setErro] = useState('');
-  const [seedState, setSeedState] = useState<SeedState>('idle');
-  const [seedMsg, setSeedMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const entrar = async () => {
+    if (busy) return;
+    setErro('');
+    setBusy(true);
+    try {
+      // On success the auth gate swaps to the app navigator automatically.
+      await signIn(user.trim(), pass);
+    } catch (e) {
+      setErro(
+        e instanceof Error && e.message === 'SEM_PERFIL'
+          ? 'Login ok, mas não há perfil cadastrado para este usuário (rode o INSERT do cooperador no banco).'
+          : 'Usuário ou senha inválidos.',
+      );
+      setBusy(false);
+    }
+  };
 
   return (
     <Screen statusBarColor={t.bg}>
@@ -25,7 +41,7 @@ export default function LoginScreen() {
         showsVerticalScrollIndicator={false}>
         <View style={{ alignItems: 'center', marginBottom: 30 }}>
           <LogoMark size={76} />
-          <Txt weight="bold" style={{ fontSize: 26, marginTop: 18, marginBottom: 4 }}>
+          <Txt weight="bold" numberOfLines={1} style={{ fontSize: 26, marginTop: 18, marginBottom: 4 }}>
             Meu Cultinho
           </Txt>
           <Txt weight="semibold" size={14} color={t.inkSoft}>
@@ -34,7 +50,15 @@ export default function LoginScreen() {
         </View>
 
         <View style={{ gap: 14 }}>
-          <Field label="Usuário" value={user} onChangeText={setUser} placeholder="seu.usuario" icon={<IconUser size={19} />} />
+          <Field
+            label="Usuário"
+            value={user}
+            onChangeText={setUser}
+            placeholder="seu.usuario"
+            icon={<IconUser size={19} />}
+            autoComplete="username"
+            textContentType="username"
+          />
           <Field
             label="Senha"
             value={pass}
@@ -42,9 +66,11 @@ export default function LoginScreen() {
             secureTextEntry
             placeholder="••••••••"
             icon={<IconLock size={19} />}
+            autoComplete="current-password"
+            textContentType="password"
           />
           <View style={{ alignItems: 'flex-end' }}>
-            <Link>Esqueci minha senha</Link>
+            <Link onPress={() => show('Em breve')}>Esqueci minha senha</Link>
           </View>
           {erro ? (
             <Txt weight="semibold" size={13} color={t.absent}>
@@ -52,16 +78,7 @@ export default function LoginScreen() {
             </Txt>
           ) : null}
           <View style={{ height: 4 }} />
-          <Button
-            variant="primary"
-            onPress={async () => {
-              try {
-                setErro('');
-                await signIn(user, pass);
-              } catch {
-                setErro('Usuário ou senha inválidos.');
-              }
-            }}>
+          <Button variant="primary" loading={busy} onPress={entrar}>
             Entrar
           </Button>
         </View>
@@ -75,37 +92,6 @@ export default function LoginScreen() {
             Organize os grupos, registre presenças e acompanhe cada jovem com cuidado.
           </Txt>
         </View>
-
-        {/* DEV-only helper to populate Firestore with the fictional seed data. */}
-        {__DEV__ ? (
-          <View style={{ marginTop: 22, alignItems: 'center', gap: 8 }}>
-            <Link
-              onPress={async () => {
-                if (seedState === 'running') return;
-                try {
-                  setSeedState('running');
-                  setSeedMsg('Populando...');
-                  await seedFirestore('cultinho123');
-                  setSeedState('done');
-                  setSeedMsg('Pronto! Entre com renan.j / cultinho123');
-                } catch (e) {
-                  setSeedState('error');
-                  setSeedMsg(e instanceof Error ? e.message : 'Falha ao popular os dados.');
-                }
-              }}>
-              ⚙️ Popular dados de teste
-            </Link>
-            {seedMsg ? (
-              <Txt
-                weight="semibold"
-                size={12.5}
-                color={seedState === 'error' ? t.absent : t.inkSoft}
-                style={{ textAlign: 'center', maxWidth: 300, lineHeight: 19 }}>
-                {seedMsg}
-              </Txt>
-            ) : null}
-          </View>
-        ) : null}
       </ScrollView>
     </Screen>
   );

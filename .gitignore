@@ -39,3 +39,8 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Claude Design handoff bundle (local reference only) + download artifact
+/handoff/
+/raw.bin
+.vercel

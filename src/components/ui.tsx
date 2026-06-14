@@ -16,6 +16,7 @@ import React, {
   type ReactNode,
 } from 'react';
 import {
+  ActivityIndicator,
   Modal,
   Pressable,
   ScrollView,
@@ -24,6 +25,7 @@ import {
   View,
   type KeyboardTypeOptions,
   type StyleProp,
+  type TextInputProps,
   type TextProps,
   type TextStyle,
   type ViewStyle,
@@ -56,6 +58,9 @@ import {
 function tint(icon: ReactElement<IconProps> | undefined, color: string) {
   return icon ? React.cloneElement(icon, { color: icon.props.color ?? color }) : null;
 }
+
+// Shared bottom-sheet scrim color (OptionSheet + ConfirmDialog).
+const SCRIM = 'rgba(20,28,40,0.42)';
 
 export interface Option {
   value: string;
@@ -149,16 +154,20 @@ export function Card({
 export function CardRow({
   children,
   onPress,
+  accessibilityLabel,
   style,
 }: {
   children: ReactNode;
   onPress?: () => void;
+  accessibilityLabel?: string;
   style?: StyleProp<ViewStyle>;
 }) {
   const t = useTheme();
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={accessibilityLabel}
       style={({ pressed }) => [
         {
           flexDirection: 'row',
@@ -182,8 +191,13 @@ export function CardRow({
 
 /* ------------------------------------------------------------------- Avatar */
 export function Avatar({ name, size = 44, color }: { name: string; size?: number; color?: string }) {
+  const t = useTheme();
   return (
     <View
+      // Decorative: the person's name is always shown next to the avatar, so
+      // the bare initials add only noise to the accessibility tree.
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
       style={{
         width: size,
         height: size,
@@ -192,7 +206,7 @@ export function Avatar({ name, size = 44, color }: { name: string; size?: number
         alignItems: 'center',
         justifyContent: 'center',
       }}>
-      <Txt weight="bold" color="#fff" style={{ fontSize: size * 0.38, letterSpacing: 0.3 }}>
+      <Txt weight="bold" color={t.onPrimary} style={{ fontSize: size * 0.38, letterSpacing: 0.3 }}>
         {initials(name)}
       </Txt>
     </View>
@@ -204,28 +218,37 @@ export function IconButton({
   children,
   onPress,
   soft,
+  disabled,
+  accessibilityLabel,
   style,
 }: {
   children: ReactNode;
   onPress?: () => void;
   soft?: boolean;
+  disabled?: boolean;
+  accessibilityLabel?: string;
   style?: StyleProp<ViewStyle>;
 }) {
   const t = useTheme();
   return (
     <Pressable
-      onPress={onPress}
+      onPress={disabled ? undefined : onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled: !!disabled }}
       hitSlop={6}
       style={({ pressed }) => [
         {
-          width: 42,
-          height: 42,
+          width: 44,
+          height: 44,
           borderRadius: 12,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: soft ? t.primarySoft : 'transparent',
         },
-        pressed && { backgroundColor: soft ? t.primarySoft : t.surface2 },
+        pressed && (soft ? { opacity: 0.6 } : { backgroundColor: t.surface2 }),
+        disabled && { opacity: 0.4 },
         style,
       ]}>
       {children}
@@ -262,7 +285,7 @@ export function AppBar({
         borderBottomColor: t.line,
       }}>
       {onBack ? (
-        <IconButton onPress={onBack}>
+        <IconButton onPress={onBack} accessibilityLabel="Voltar">
           <IconBack size={22} />
         </IconButton>
       ) : null}
@@ -285,11 +308,11 @@ export function AppBar({
 export function StatusChip({ kind }: { kind: AttendanceMark | YouthStatus }) {
   const t = useTheme();
   const map: Record<string, [string, string, string]> = {
-    Presente: [t.presentSoft, t.present, 'Presente'],
-    Falta: [t.absentSoft, t.absent, 'Falta'],
+    Presente: [t.presentSoft, t.presentDeep, 'Presente'],
+    Falta: [t.absentSoft, t.absentDeep, 'Falta'],
     Pendente: [t.surface2, t.inkSoft, 'Pendente'],
-    Ativo: [t.presentSoft, t.present, 'Ativo'],
-    Inativo: [t.surface2, t.inkFaint, 'Inativo'],
+    Ativo: [t.presentSoft, t.presentDeep, 'Ativo'],
+    Inativo: [t.surface2, t.inkSoft, 'Inativo'],
   };
   const [bg, fg, label] = map[kind] ?? [t.surface2, t.inkSoft, kind];
   return (
@@ -316,10 +339,10 @@ export type ChipTone = 'primary' | 'gold' | 'present' | 'absent';
 export function Chip({ children, tone = 'primary' }: { children: ReactNode; tone?: ChipTone }) {
   const t = useTheme();
   const tones: Record<ChipTone, [string, string]> = {
-    primary: [t.primarySoft, t.primary],
-    gold: [t.goldSoft, t.gold],
-    present: [t.presentSoft, t.present],
-    absent: [t.absentSoft, t.absent],
+    primary: [t.primarySoft, t.primaryDeep],
+    gold: [t.goldSoft, t.goldDeep],
+    present: [t.presentSoft, t.presentDeep],
+    absent: [t.absentSoft, t.absentDeep],
   };
   const [bg, fg] = tones[tone];
   return (
@@ -348,6 +371,9 @@ export function Button({
   sm,
   bg,
   fg,
+  disabled,
+  loading,
+  accessibilityLabel,
   style,
 }: {
   children: ReactNode;
@@ -357,6 +383,9 @@ export function Button({
   sm?: boolean;
   bg?: string;
   fg?: string;
+  disabled?: boolean;
+  loading?: boolean;
+  accessibilityLabel?: string;
   style?: StyleProp<ViewStyle>;
 }) {
   const t = useTheme();
@@ -364,14 +393,19 @@ export function Button({
     primary: { bg: t.primary, fg: t.onPrimary },
     secondary: { bg: t.primarySoft, fg: t.primary },
     ghost: { bg: 'transparent', fg: t.inkSoft },
-    'danger-soft': { bg: t.absentSoft, fg: t.absent },
+    'danger-soft': { bg: t.absentSoft, fg: t.absentDeep },
   };
   const v = variants[variant];
   const bgColor = bg ?? v.bg;
   const fgColor = fg ?? v.fg;
+  const blocked = disabled || loading;
   return (
     <Pressable
-      onPress={onPress}
+      onPress={blocked ? undefined : onPress}
+      disabled={blocked}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled: !!disabled, busy: !!loading }}
       style={({ pressed }) => [
         {
           flexDirection: 'row',
@@ -379,17 +413,20 @@ export function Button({
           justifyContent: 'center',
           gap: 9,
           backgroundColor: bgColor,
+          minHeight: 44,
           borderRadius: sm ? 11 : t.radiusBtn,
-          paddingVertical: sm ? 9 : 14,
-          paddingHorizontal: sm ? 14 : 18,
+          paddingVertical: sm ? 11 : 14,
+          paddingHorizontal: sm ? 12 : 18,
           alignSelf: sm ? 'flex-start' : 'stretch',
         },
         variant === 'primary' && !bg && t.shadowFab,
         pressed && { transform: [{ scale: 0.97 }] },
+        pressed && variant === 'ghost' && { backgroundColor: t.surface2 },
+        blocked && { opacity: 0.5 },
         style,
       ]}>
-      {tint(icon, fgColor)}
-      <Txt weight="bold" size={sm ? 14 : 16} color={fgColor}>
+      {loading ? <ActivityIndicator size="small" color={fgColor} /> : tint(icon, fgColor)}
+      <Txt weight="bold" size={sm ? 14 : 16} color={fgColor} numberOfLines={1}>
         {children}
       </Txt>
     </Pressable>
@@ -406,6 +443,10 @@ export function Field({
   icon,
   keyboardType,
   editable = true,
+  error,
+  accessibilityLabel,
+  autoComplete,
+  textContentType,
 }: {
   label?: string;
   value?: string;
@@ -415,9 +456,14 @@ export function Field({
   icon?: ReactElement<IconProps>;
   keyboardType?: KeyboardTypeOptions;
   editable?: boolean;
+  error?: string;
+  accessibilityLabel?: string;
+  autoComplete?: TextInputProps['autoComplete'];
+  textContentType?: TextInputProps['textContentType'];
 }) {
   const t = useTheme();
   const [focused, setFocused] = useState(false);
+  const borderColor = error ? t.absent : focused ? t.primary : t.line;
   return (
     <View style={{ gap: 7 }}>
       {label ? (
@@ -429,17 +475,20 @@ export function Field({
         {icon ? (
           <View
             style={{ position: 'absolute', left: 13, top: 0, bottom: 0, justifyContent: 'center', zIndex: 1 }}>
-            {tint(icon, t.inkFaint)}
+            {tint(icon, t.inkSoft)}
           </View>
         ) : null}
         <TextInput
-          value={value}
+          value={value ?? ''}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={t.inkFaint}
+          placeholderTextColor={t.inkSoft}
           secureTextEntry={secureTextEntry}
           keyboardType={keyboardType}
           editable={editable}
+          accessibilityLabel={accessibilityLabel ?? label}
+          autoComplete={autoComplete}
+          textContentType={textContentType}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           style={{
@@ -448,7 +497,7 @@ export function Field({
             color: t.ink,
             backgroundColor: t.surface,
             borderWidth: 1.5,
-            borderColor: focused ? t.primary : t.line,
+            borderColor,
             borderRadius: t.radiusField,
             paddingVertical: 13,
             paddingHorizontal: 14,
@@ -456,6 +505,11 @@ export function Field({
           }}
         />
       </View>
+      {error ? (
+        <Txt weight="semibold" size={12} color={t.absent}>
+          {error}
+        </Txt>
+      ) : null}
     </View>
   );
 }
@@ -481,10 +535,11 @@ export function TextArea({
         </Txt>
       ) : null}
       <TextInput
-        value={value}
+        value={value ?? ''}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={t.inkFaint}
+        placeholderTextColor={t.inkSoft}
+        accessibilityLabel={label}
         multiline
         textAlignVertical="top"
         onFocus={() => setFocused(true)}
@@ -527,7 +582,7 @@ function OptionSheet({
     <Modal visible={open} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable
         onPress={onClose}
-        style={{ flex: 1, backgroundColor: 'rgba(20,28,40,0.42)', justifyContent: 'flex-end' }}>
+        style={{ flex: 1, backgroundColor: SCRIM, justifyContent: 'flex-end' }}>
         <Pressable
           onPress={() => {}}
           style={[
@@ -556,6 +611,8 @@ function OptionSheet({
                 <Pressable
                   key={o.value}
                   onPress={() => onSelect(o.value)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
                   style={({ pressed }) => [
                     {
                       flexDirection: 'row',
@@ -607,20 +664,25 @@ export function SelectField({
       ) : null}
       <Pressable
         onPress={() => setOpen(true)}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: t.surface,
-          borderWidth: 1.5,
-          borderColor: open ? t.primary : t.line,
-          borderRadius: t.radiusField,
-          paddingVertical: 13,
-          paddingHorizontal: 14,
-        }}>
-        <Txt size={15.5} style={{ flex: 1 }} numberOfLines={1} color={current ? t.ink : t.inkFaint}>
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        style={({ pressed }) => [
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: t.surface,
+            borderWidth: 1.5,
+            borderColor: open ? t.primary : t.line,
+            borderRadius: t.radiusField,
+            paddingVertical: 13,
+            paddingHorizontal: 14,
+          },
+          pressed && { borderColor: t.primary, opacity: 0.9 },
+        ]}>
+        <Txt size={15.5} style={{ flex: 1 }} numberOfLines={1} color={value ? t.ink : t.inkSoft}>
           {currentLabel}
         </Txt>
-        <IconChevD size={18} color={t.inkFaint} />
+        <IconChevD size={18} color={t.inkSoft} />
       </Pressable>
       <OptionSheet
         open={open}
@@ -663,11 +725,14 @@ export function Segmented({
             <Pressable
               key={o}
               onPress={() => onChange?.(o)}
-              style={[
-                { flex: 1, paddingVertical: 9, borderRadius: 11, alignItems: 'center' },
+              accessibilityRole="button"
+              accessibilityState={{ selected: on }}
+              style={({ pressed }) => [
+                { flex: 1, minHeight: 44, paddingVertical: 11, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
                 on && { backgroundColor: t.surface, ...t.shadowCard },
+                pressed && { opacity: 0.7 },
               ]}>
-              <Txt weight="bold" size={14} color={on ? t.primary : t.inkSoft}>
+              <Txt weight="bold" size={14} color={on ? t.primary : t.inkSoft} numberOfLines={1}>
                 {o}
               </Txt>
             </Pressable>
@@ -682,8 +747,8 @@ export function FieldSection({ icon, children }: { icon?: ReactElement<IconProps
   const t = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4, marginHorizontal: 2 }}>
-      {tint(icon, t.primary)}
-      <Txt weight="bold" size={13} color={t.primary} style={{ textTransform: 'uppercase', letterSpacing: 0.8 }}>
+      {tint(icon, t.primaryDeep)}
+      <Txt weight="bold" size={13} color={t.primaryDeep} style={{ textTransform: 'uppercase', letterSpacing: 0.8 }}>
         {children}
       </Txt>
     </View>
@@ -695,10 +760,12 @@ export function SearchBar({
   value,
   onChange,
   placeholder = 'Buscar...',
+  accessibilityLabel,
 }: {
   value?: string;
   onChange?: (v: string) => void;
   placeholder?: string;
+  accessibilityLabel?: string;
 }) {
   const t = useTheme();
   return (
@@ -714,12 +781,13 @@ export function SearchBar({
         paddingVertical: 11,
         paddingHorizontal: 16,
       }}>
-      <IconSearch size={19} color={t.inkFaint} />
+      <IconSearch size={19} color={t.inkSoft} />
       <TextInput
-        value={value}
+        value={value ?? ''}
         onChangeText={onChange}
         placeholder={placeholder}
-        placeholderTextColor={t.inkFaint}
+        placeholderTextColor={t.inkSoft}
+        accessibilityLabel={accessibilityLabel ?? placeholder}
         style={{ flex: 1, fontFamily: t.font.regular, fontSize: 15, color: t.ink, padding: 0 }}
       />
     </View>
@@ -748,14 +816,21 @@ export function FilterChips({
           <Pressable
             key={o.value}
             onPress={() => onChange?.(o.value)}
-            style={{
-              paddingVertical: 8,
-              paddingHorizontal: 14,
-              borderRadius: 999,
-              borderWidth: 1.5,
-              borderColor: on ? t.primary : t.line,
-              backgroundColor: on ? t.primary : t.surface,
-            }}>
+            accessibilityRole="button"
+            accessibilityState={{ selected: on }}
+            style={({ pressed }) => [
+              {
+                minHeight: 44,
+                justifyContent: 'center',
+                paddingVertical: 8,
+                paddingHorizontal: 14,
+                borderRadius: 999,
+                borderWidth: 1.5,
+                borderColor: on ? t.primary : t.line,
+                backgroundColor: on ? t.primary : t.surface,
+              },
+              pressed && { opacity: 0.7 },
+            ]}>
             <Txt weight="bold" size={13.5} color={on ? t.onPrimary : t.inkSoft}>
               {o.label}
             </Txt>
@@ -900,7 +975,13 @@ export function BottomNav({
           <Pressable
             key={it.id}
             onPress={() => onChange(it.id)}
-            style={{ flex: 1, alignItems: 'center', gap: 3, paddingVertical: 6 }}>
+            accessibilityRole="tab"
+            accessibilityState={{ selected: on }}
+            accessibilityLabel={it.label}
+            style={({ pressed }) => [
+              { flex: 1, alignItems: 'center', gap: 3, paddingVertical: 6 },
+              pressed && { opacity: 0.6 },
+            ]}>
             <View
               style={{
                 width: 52,
@@ -910,9 +991,9 @@ export function BottomNav({
                 justifyContent: 'center',
                 backgroundColor: on ? t.primarySoft : 'transparent',
               }}>
-              <I size={22} sw={on ? 2.4 : 2} color={on ? t.primary : t.inkFaint} />
+              <I size={22} sw={on ? 2.4 : 2} color={on ? t.primary : t.inkSoft} />
             </View>
-            <Txt weight="bold" size={10.5} color={on ? t.primary : t.inkFaint}>
+            <Txt weight="bold" size={10.5} color={on ? t.primary : t.inkSoft}>
               {it.label}
             </Txt>
           </Pressable>
@@ -974,7 +1055,7 @@ export function ConfirmDialog({
     <Modal visible={open} transparent animationType="slide" onRequestClose={onCancel}>
       <Pressable
         onPress={onCancel}
-        style={{ flex: 1, backgroundColor: 'rgba(20,28,40,0.42)', justifyContent: 'flex-end' }}>
+        style={{ flex: 1, backgroundColor: SCRIM, justifyContent: 'flex-end' }}>
         <Pressable
           onPress={() => {}}
           style={[
@@ -1016,7 +1097,7 @@ export function ConfirmDialog({
             <Button variant="secondary" onPress={onCancel} style={{ flex: 1 }}>
               Cancelar
             </Button>
-            <Button onPress={onConfirm} bg={danger ? t.absent : t.primary} fg="#fff" style={{ flex: 1 }}>
+            <Button onPress={onConfirm} bg={danger ? t.absent : t.primary} fg={t.onPrimary} style={{ flex: 1 }}>
               {confirmLabel}
             </Button>
           </View>
@@ -1043,10 +1124,10 @@ export function InfoRow({
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       {tint(icon, t.primary)}
       <View style={{ flex: 1 }}>
-        <Txt weight="bold" size={11.5} color={t.inkFaint} style={{ textTransform: 'uppercase', letterSpacing: 0.4 }}>
+        <Txt weight="bold" size={11.5} color={t.inkSoft} style={{ textTransform: 'uppercase', letterSpacing: 0.4 }}>
           {label}
         </Txt>
-        <Txt weight="semibold" size={14.5}>
+        <Txt weight="semibold" size={14.5} numberOfLines={2}>
           {value || '—'}
         </Txt>
       </View>
@@ -1094,9 +1175,9 @@ export function SumPill({ num, label, tone }: { num: ReactNode; label: string; t
   const t = useTheme();
   const map: Record<SumTone, [string, string]> = {
     ink: [t.surface2, t.ink],
-    present: [t.presentSoft, t.present],
-    absent: [t.absentSoft, t.absent],
-    gold: [t.goldSoft, t.gold],
+    present: [t.presentSoft, t.presentDeep],
+    absent: [t.absentSoft, t.absentDeep],
+    gold: [t.goldSoft, t.goldDeep],
   };
   const [bg, fg] = map[tone];
   return (
@@ -1104,7 +1185,7 @@ export function SumPill({ num, label, tone }: { num: ReactNode; label: string; t
       <Txt weight="bold" color={fg} style={{ fontSize: 21, lineHeight: 22 }}>
         {num}
       </Txt>
-      <Txt weight="bold" size={10.5} color={fg} style={{ marginTop: 3 }}>
+      <Txt weight="bold" size={10.5} color={t.inkSoft} style={{ marginTop: 3 }}>
         {label}
       </Txt>
     </View>
@@ -1123,12 +1204,15 @@ export function MarkBtn({
 }) {
   const t = useTheme();
   const present = kind === 'present';
-  const color = present ? t.present : t.absent;
+  const deep = present ? t.presentDeep : t.absentDeep;
   const line = present ? t.presentLine : t.absentLine;
-  const fg = active ? '#fff' : color;
+  const fg = active ? t.onPrimary : deep;
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      accessibilityLabel={present ? 'Marcar presente' : 'Marcar falta'}
       style={({ pressed }) => [
         {
           flex: 1,
@@ -1140,8 +1224,8 @@ export function MarkBtn({
           alignItems: 'center',
           justifyContent: 'center',
           gap: 7,
-          backgroundColor: active ? color : 'transparent',
-          borderColor: active ? color : line,
+          backgroundColor: active ? deep : 'transparent',
+          borderColor: active ? deep : line,
         },
         pressed && { transform: [{ scale: 0.97 }] },
       ]}>
@@ -1177,7 +1261,11 @@ export function SectionLabel({ children, action }: { children: ReactNode; action
 export function Link({ children, onPress }: { children: ReactNode; onPress?: () => void }) {
   const t = useTheme();
   return (
-    <Pressable onPress={onPress} hitSlop={6}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+      style={({ pressed }) => [{ paddingVertical: 8, paddingHorizontal: 2 }, pressed && { opacity: 0.6 }]}>
       <Txt weight="bold" size={13.5} color={t.primary}>
         {children}
       </Txt>
@@ -1200,6 +1288,8 @@ export function Fab({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
       style={({ pressed }) => [
         {
           position: 'absolute',
@@ -1216,8 +1306,8 @@ export function Fab({
         t.shadowFab,
         pressed && { transform: [{ scale: 0.97 }] },
       ]}>
-      <IconPlus size={20} color="#fff" />
-      <Txt weight="bold" size={15} color="#fff">
+      <IconPlus size={20} color={t.onPrimary} />
+      <Txt weight="bold" size={15} color={t.onPrimary}>
         {label}
       </Txt>
     </Pressable>

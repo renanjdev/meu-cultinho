@@ -2,14 +2,15 @@
 import React from 'react';
 import { View } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
+import { useSession } from '../state/session';
+import { useToast } from '../components/Toast';
 import { useNav } from '../navigation/useNav';
-import { GROUPS } from '../data/seed';
+import { useJovens, useGrupos, useAuxiliares } from '../data/repo';
 import type { RouteName } from '../navigation/types';
 import {
   Avatar,
   BottomNav,
   CardRow,
-  Chip,
   GroupIcon,
   IconButton,
   Link,
@@ -48,13 +49,6 @@ interface ActionItem {
   primary?: boolean;
 }
 
-const SUMMARY: SummaryItem[] = [
-  { num: 48, label: 'Jovens ativos', Icon: IconUsers, tone: 'primary' },
-  { num: 5, label: 'Auxiliares', Icon: IconUser, tone: 'gold' },
-  { num: 6, label: 'Grupos', Icon: IconLayers, tone: 'present' },
-  { num: '85%', label: 'Última reunião', Icon: IconCheckCircle, tone: 'present' },
-];
-
 const ACTIONS: ActionItem[] = [
   { label: 'Registrar frequência', sub: 'Marcar presenças de hoje', Icon: IconClipboard, to: 'Attendance', primary: true },
   { label: 'Cadastrar jovem', sub: 'Adicionar nova criança ou jovem', Icon: IconUser, to: 'YouthForm' },
@@ -63,7 +57,20 @@ const ACTIONS: ActionItem[] = [
 
 export default function AdminHome() {
   const t = useTheme();
+  const { show } = useToast();
+  const { session } = useSession();
   const { go } = useNav();
+  const { jovens } = useJovens();
+  const { grupos } = useGrupos();
+  const { auxiliares } = useAuxiliares();
+  const firstName = session?.name?.split(' ')[0] ?? 'Cooperador';
+
+  const SUMMARY: SummaryItem[] = [
+    { num: jovens.filter((j) => j.status === 'Ativo').length, label: 'Jovens ativos', Icon: IconUsers, tone: 'primary' },
+    { num: auxiliares.length, label: 'Auxiliares', Icon: IconUser, tone: 'gold' },
+    { num: grupos.length, label: 'Grupos', Icon: IconLayers, tone: 'present' },
+    { num: '—', label: 'Última reunião', Icon: IconCheckCircle, tone: 'present' },
+  ];
 
   return (
     <Screen>
@@ -79,16 +86,16 @@ export default function AdminHome() {
           borderBottomWidth: 1,
           borderBottomColor: t.line,
         }}>
-        <Avatar name="Renan Januário" size={42} />
+        <Avatar name={session?.name ?? 'Cooperador'} size={42} />
         <View style={{ flex: 1 }}>
-          <Txt weight="bold" size={18}>
-            Olá, Renan 👋
+          <Txt weight="bold" size={18} numberOfLines={1}>
+            Olá, {firstName} 👋
           </Txt>
           <Txt weight="semibold" size={12.5} color={t.inkSoft}>
             Resumo geral do Meu Cultinho
           </Txt>
         </View>
-        <IconButton soft>
+        <IconButton soft accessibilityLabel="Notificações" onPress={() => show('Em breve')}>
           <IconBell size={21} color={t.primary} />
         </IconButton>
       </View>
@@ -123,19 +130,20 @@ export default function AdminHome() {
                   borderRadius: 14,
                   alignItems: 'center',
                   justifyContent: 'center',
+                  flexShrink: 0,
                   backgroundColor: a.primary ? 'rgba(255,255,255,0.18)' : t.primarySoft,
                 }}>
-                <a.Icon size={a.primary ? 22 : 20} color={a.primary ? '#fff' : t.primary} />
+                <a.Icon size={a.primary ? 22 : 20} color={a.primary ? t.onPrimary : t.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Txt weight="bold" size={15.5} color={a.primary ? '#fff' : t.ink}>
+                <Txt weight="bold" size={15.5} color={a.primary ? t.onPrimary : t.ink}>
                   {a.label}
                 </Txt>
                 <Txt weight="semibold" size={12.5} color={a.primary ? 'rgba(255,255,255,0.88)' : t.inkSoft}>
                   {a.sub}
                 </Txt>
               </View>
-              <IconChevR size={20} color={a.primary ? '#fff' : t.ink} opacity={0.5} />
+              <IconChevR size={20} color={a.primary ? t.onPrimary : t.ink} opacity={0.5} />
             </CardRow>
           ))}
         </View>
@@ -143,18 +151,17 @@ export default function AdminHome() {
         {/* groups today */}
         <SectionLabel action={<Link onPress={() => go('GroupList')}>Ver todos</Link>}>Grupos de hoje</SectionLabel>
         <View style={{ gap: 14 }}>
-          {GROUPS.slice(0, 3).map((g) => (
+          {grupos.slice(0, 3).map((g) => (
             <CardRow key={g.id} onPress={() => go('Attendance', { group: g.id })}>
               <GroupIcon icon={g.icon} />
               <View style={{ flex: 1 }}>
                 <Txt weight="bold" size={14.5} numberOfLines={1}>
                   {g.name}
                 </Txt>
-                <Txt weight="semibold" size={12.5} color={t.inkSoft}>
-                  {g.count} jovens · {g.aux}
+                <Txt weight="semibold" size={12.5} color={t.inkSoft} numberOfLines={1}>
+                  {g.count} jovens · {g.auxName}
                 </Txt>
               </View>
-              <Chip tone="gold">{g.freq}%</Chip>
             </CardRow>
           ))}
         </View>
