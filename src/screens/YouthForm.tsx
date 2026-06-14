@@ -133,7 +133,10 @@ export default function YouthForm() {
       <AppBar title={editId ? 'Editar Jovem' : 'Cadastrar Jovem'} onBack={back} />
       <ScreenScroll contentStyle={{ paddingBottom: 24 }}>
         <View style={{ alignItems: 'center', marginBottom: 4 }}>
-          <Pressable onPress={pickPhoto} accessibilityRole="button" accessibilityLabel="Foto do jovem">
+          <Pressable
+            onPress={pickPhoto}
+            accessibilityRole="button"
+            accessibilityLabel={photo ? 'Trocar foto do jovem' : 'Adicionar foto do jovem'}>
             <Avatar name={trimmedName || 'Jovem'} size={88} photoUrl={photo?.uri} />
             <View
               style={{
@@ -159,6 +162,7 @@ export default function YouthForm() {
         <FieldSection icon={<IconUser size={16} />}>Dados pessoais</FieldSection>
         <Field
           label="Nome completo"
+          required
           placeholder="Ex: João Miguel Soares"
           value={f.name}
           onChangeText={set('name')}
@@ -166,7 +170,7 @@ export default function YouthForm() {
         />
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <View style={{ flex: 1 }}>
-            <Field label="Data de nascimento" placeholder="dd/mm/aaaa" value={f.birth} onChangeText={set('birth')} keyboardType="number-pad" icon={<IconCalendar size={17} />} />
+            <Field label="Nascimento" placeholder="dd/mm/aaaa" value={f.birth} onChangeText={set('birth')} keyboardType="number-pad" icon={<IconCalendar size={17} />} />
           </View>
           <View style={{ flex: 1 }}>
             <Segmented label="Sexo" value={f.sex} options={['Masculino', 'Feminino']} onChange={set('sex')} />
