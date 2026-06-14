@@ -257,3 +257,178 @@ export async function setMark(
   );
   if (error) throw error;
 }
+
+/* ------------------------------------------------ Datas (rótulos PT-BR) */
+const WEEKDAYS_PT = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+const MONTHS_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+/** Parse YYYY-MM-DD as a *local* date (evita o off-by-one de meia-noite UTC). */
+function isoToLocalDate(iso: string): Date {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+/** YYYY-MM-DD -> "Domingo". */
+export function isoWeekday(iso: string): string {
+  return WEEKDAYS_PT[isoToLocalDate(iso).getDay()];
+}
+/** YYYY-MM-DD -> "02 jun". */
+export function isoDayMonth(iso: string): string {
+  const [, m, d] = iso.split('-').map(Number);
+  return `${String(d).padStart(2, '0')} ${MONTHS_PT[m - 1]}`;
+}
+
+const pct = (p: number, a: number) => (p + a ? Math.round((p / (p + a)) * 100) : 0);
+
+/* ----------------------------------------------------------- Relatórios */
+export interface RankItem {
+  id: string;
+  name: string;
+  pct: number;
+}
+export interface GroupFreq {
+  id: string;
+  name: string;
+  freq: number;
+}
+export interface ReportData {
+  avgFreq: number;
+  activeYouth: number;
+  totalPresent: number;
+  totalAbsent: number;
+  reunioes: number;
+  byGroup: GroupFreq[];
+  topPresent: RankItem[];
+  topAbsent: RankItem[];
+}
+
+/** All report aggregates derived from `presencas` (+ active youth count). */
+export function useReports() {
+  const [data, setData] = useState<ReportData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const reload = useCallback(async () => {
+    setLoading(true);
+    const [presRes, gruposRes, ativosRes] = await Promise.all([
+      supabase.from('presencas').select('data, status, grupo_id, jovem_id, jovens(name)'),
+      supabase.from('grupos').select('id, name, short').eq('status', 'Ativo').order('name'),
+      supabase.from('jovens').select('id', { count: 'exact', head: true }).eq('status', 'Ativo'),
+    ]);
+    const pres = (presRes.data ?? []) as any[];
+    const grupos = (gruposRes.data ?? []) as any[];
+
+    let totalPresent = 0;
+    let totalAbsent = 0;
+    const dates = new Set<string>();
+    const byGroupAgg = new Map<string, { p: number; a: number }>();
+    const byYouth = new Map<string, { name: string; p: number; a: number }>();
+
+    for (const r of pres) {
+      const isP = r.status === 'present';
+      if (isP) totalPresent++;
+      else totalAbsent++;
+      dates.add(r.data);
+      if (r.grupo_id) {
+        const g = byGroupAgg.get(r.grupo_id) ?? { p: 0, a: 0 };
+        if (isP) g.p++;
+        else g.a++;
+        byGroupAgg.set(r.grupo_id, g);
+      }
+      const name = r.jovens?.name;
+      if (r.jovem_id && name) {
+        const y = byYouth.get(r.jovem_id) ?? { name, p: 0, a: 0 };
+        if (isP) y.p++;
+        else y.a++;
+        byYouth.set(r.jovem_id, y);
+      }
+    }
+
+    const byGroup: GroupFreq[] = grupos.map((g) => {
+      const agg = byGroupAgg.get(g.id);
+      return { id: g.id, name: g.short ?? g.name, freq: agg ? pct(agg.p, agg.a) : 0 };
+    });
+
+    const ranked: RankItem[] = Array.from(byYouth.entries()).map(([id, y]) => ({
+      id,
+      name: y.name,
+      pct: pct(y.p, y.a),
+    }));
+    const topPresent = [...ranked].sort((a, b) => b.pct - a.pct).slice(0, 3);
+    const topAbsent = [...ranked].sort((a, b) => a.pct - b.pct).slice(0, 3);
+
+    setData({
+      avgFreq: pct(totalPresent, totalAbsent),
+      activeYouth: ativosRes.count ?? 0,
+      totalPresent,
+      totalAbsent,
+      reunioes: dates.size,
+      byGroup,
+      topPresent,
+      topAbsent,
+    });
+    setLoading(false);
+  }, []);
+  useFocusEffect(useCallback(() => void reload(), [reload]));
+  return { data, loading, reload };
+}
+
+/* ------------------------------------------------------------- Histórico */
+export interface HistoryEntry {
+  id: string;
+  dateISO: string;
+  dayMonth: string; // "02 jun"
+  weekday: string; // "Domingo"
+  groupLabel: string;
+  present: number;
+  absent: number;
+  freq: number;
+}
+
+/**
+ * Past meetings, one row per date. `grupoId` 'all' aggregates every group of
+ * the date; a specific id narrows to that group. Newest first.
+ */
+export function useHistory(grupoId: string) {
+  const [rows, setRows] = useState<HistoryEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const reload = useCallback(async () => {
+    setLoading(true);
+    let q = supabase.from('presencas').select('data, status, grupo_id, grupos(name, short)');
+    if (grupoId !== 'all') q = q.eq('grupo_id', grupoId);
+    const { data } = await q;
+    const pres = (data ?? []) as any[];
+
+    const buckets = new Map<string, { present: number; absent: number; groupLabel: string }>();
+    for (const r of pres) {
+      const b =
+        buckets.get(r.data) ??
+        {
+          present: 0,
+          absent: 0,
+          groupLabel:
+            grupoId === 'all' ? 'Todos os grupos' : r.grupos?.short ?? r.grupos?.name ?? '—',
+        };
+      if (r.status === 'present') b.present++;
+      else b.absent++;
+      buckets.set(r.data, b);
+    }
+
+    const out: HistoryEntry[] = Array.from(buckets.entries())
+      .sort((a, b) => (a[0] < b[0] ? 1 : -1)) // date desc
+      .map(([dateISO, b]) => {
+        const total = b.present + b.absent;
+        return {
+          id: dateISO,
+          dateISO,
+          dayMonth: isoDayMonth(dateISO),
+          weekday: isoWeekday(dateISO),
+          groupLabel: b.groupLabel,
+          present: b.present,
+          absent: b.absent,
+          freq: total ? Math.round((b.present / total) * 100) : 0,
+        };
+      });
+    setRows(out);
+    setLoading(false);
+  }, [grupoId]);
+  useFocusEffect(useCallback(() => void reload(), [reload]));
+  return { rows, loading, reload };
+}

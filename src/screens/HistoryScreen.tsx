@@ -1,9 +1,9 @@
-/** 13. Histórico de Frequência — past meetings with attendance bars. */
+/** 13. Histórico de Frequência — past meetings with attendance bars (real). */
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useNav } from '../navigation/useNav';
-import { HISTORY } from '../data/seed';
+import { useGrupos, useHistory, isoToBR } from '../data/repo';
 import {
   AppBar,
   CardRow,
@@ -21,15 +21,17 @@ export default function HistoryScreen() {
   const t = useTheme();
   const { go, back } = useNav();
   const [grp, setGrp] = useState('all');
+  const { grupos } = useGrupos();
+  const { rows, loading } = useHistory(grp);
 
   const groupOptions = [
     { value: 'all', label: 'Todos os grupos' },
-    { value: 'g5', label: 'Moços' },
-    { value: 'g6', label: 'Moças' },
-    { value: 'g3', label: 'Meninos até 12' },
+    ...grupos.map((g) => ({ value: g.id, label: g.short || g.name })),
   ];
-  const selectedLabel = groupOptions.find((o) => o.value === grp)?.label;
-  const rows = grp === 'all' ? HISTORY : HISTORY.filter((h) => h.group === selectedLabel);
+
+  // rows come newest-first → first = latest, last = earliest.
+  const dateFrom = rows.length ? isoToBR(rows[rows.length - 1].dateISO) : '—';
+  const dateTo = rows.length ? isoToBR(rows[0].dateISO) : '—';
 
   return (
     <Screen>
@@ -37,10 +39,10 @@ export default function HistoryScreen() {
       <View style={{ paddingHorizontal: 16, paddingVertical: 12, backgroundColor: t.surface, borderBottomWidth: 1, borderBottomColor: t.line, gap: 10 }}>
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <View style={{ flex: 1 }}>
-            <Field label="Data inicial" value="01/05/2025" editable={false} icon={<IconCalendar size={16} />} />
+            <Field label="Primeira reunião" value={dateFrom} editable={false} icon={<IconCalendar size={16} />} />
           </View>
           <View style={{ flex: 1 }}>
-            <Field label="Data final" value="08/06/2025" editable={false} icon={<IconCalendar size={16} />} />
+            <Field label="Última reunião" value={dateTo} editable={false} icon={<IconCalendar size={16} />} />
           </View>
         </View>
         <FilterChips value={grp} onChange={setGrp} options={groupOptions} />
@@ -49,61 +51,61 @@ export default function HistoryScreen() {
       <ScreenScroll contentStyle={{ paddingBottom: 24 }}>
         {rows.length === 0 ? (
           <Txt color={t.inkSoft} style={{ paddingVertical: 30, textAlign: 'center' }}>
-            Nenhum registro neste período.
+            {loading ? 'Carregando histórico…' : 'Nenhum registro neste período.'}
           </Txt>
         ) : (
           rows.map((h) => {
-          const tone: 'present' | 'gold' | 'absent' = h.freq >= 85 ? 'present' : h.freq >= 70 ? 'gold' : 'absent';
-          const barColor = tone === 'present' ? t.present : tone === 'gold' ? t.gold : t.absent;
-          const [day, month] = h.date.split(' ');
-          return (
-            <CardRow key={h.id} onPress={() => go('Reports')} style={{ flexDirection: 'column', alignItems: 'stretch', gap: 0 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <View
-                  style={{
-                    width: 48,
-                    height: 48,
-                    flexShrink: 0,
-                    borderRadius: 14,
-                    backgroundColor: t.primarySoft,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                  <Txt weight="bold" size={17} color={t.primary} style={{ lineHeight: 19 }}>
-                    {day}
-                  </Txt>
-                  <Txt weight="bold" size={10} color={t.primary} style={{ textTransform: 'uppercase' }}>
-                    {month}
-                  </Txt>
+            const tone: 'present' | 'gold' | 'absent' = h.freq >= 85 ? 'present' : h.freq >= 70 ? 'gold' : 'absent';
+            const barColor = tone === 'present' ? t.present : tone === 'gold' ? t.gold : t.absent;
+            const [day, month] = h.dayMonth.split(' ');
+            return (
+              <CardRow key={h.id} onPress={() => go('Reports')} style={{ flexDirection: 'column', alignItems: 'stretch', gap: 0 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View
+                    style={{
+                      width: 48,
+                      height: 48,
+                      flexShrink: 0,
+                      borderRadius: 14,
+                      backgroundColor: t.primarySoft,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                    <Txt weight="bold" size={17} color={t.primary} style={{ lineHeight: 19 }}>
+                      {day}
+                    </Txt>
+                    <Txt weight="bold" size={10} color={t.primary} style={{ textTransform: 'uppercase' }}>
+                      {month}
+                    </Txt>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Txt weight="bold" size={14.5} numberOfLines={1}>
+                      {h.groupLabel}
+                    </Txt>
+                    <Txt weight="semibold" size={12.5} color={t.inkSoft}>
+                      {h.weekday} · {h.present + h.absent} jovens
+                    </Txt>
+                  </View>
+                  <Chip tone={tone}>{h.freq}%</Chip>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Txt weight="bold" size={14.5} numberOfLines={1}>
-                    {h.group}
-                  </Txt>
-                  <Txt weight="semibold" size={12.5} color={t.inkSoft}>
-                    {h.day} · {h.present + h.absent} jovens
-                  </Txt>
+                <View style={{ flexDirection: 'row', gap: 14, marginTop: 11, alignItems: 'center' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                    <IconCheck size={15} color={t.present} />
+                    <Txt weight="bold" size={13} color={t.present}>
+                      {h.present} presentes
+                    </Txt>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                    <IconX size={15} color={t.absent} />
+                    <Txt weight="bold" size={13} color={t.absent}>
+                      {h.absent} faltas
+                    </Txt>
+                  </View>
                 </View>
-                <Chip tone={tone}>{h.freq}%</Chip>
-              </View>
-              <View style={{ flexDirection: 'row', gap: 14, marginTop: 11, alignItems: 'center' }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                  <IconCheck size={15} color={t.present} />
-                  <Txt weight="bold" size={13} color={t.present}>
-                    {h.present} presentes
-                  </Txt>
+                <View style={{ marginTop: 10 }}>
+                  <ProgressBar value={h.freq} color={barColor} />
                 </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                  <IconX size={15} color={t.absent} />
-                  <Txt weight="bold" size={13} color={t.absent}>
-                    {h.absent} faltas
-                  </Txt>
-                </View>
-              </View>
-              <View style={{ marginTop: 10 }}>
-                <ProgressBar value={h.freq} color={barColor} />
-              </View>
-            </CardRow>
+              </CardRow>
             );
           })
         )}
