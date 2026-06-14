@@ -1,9 +1,12 @@
 /** 15. Configurações — profile, theme switcher, congregation, app, logout. */
-import React, { type ComponentType } from 'react';
-import { Pressable, View } from 'react-native';
+import React, { useState, type ComponentType } from 'react';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useSession } from '../state/session';
 import { useNav } from '../navigation/useNav';
+import { useToast } from '../components/Toast';
+import { pickAndUploadPhoto } from '../data/photos';
+import { updatePhotoUrl } from '../data/repo';
 import {
   AppBar,
   Avatar,
@@ -29,6 +32,7 @@ import {
   IconLayers,
   IconLogout,
   IconSettings,
+  IconPlus,
   IconShield,
   IconUser,
   IconUsers,
@@ -37,10 +41,29 @@ import {
 
 export default function Settings() {
   const t = useTheme();
-  const { session, signOut } = useSession();
+  const { session, signOut, refresh } = useSession();
+  const { show } = useToast();
   const isAux = session?.role === 'auxiliar';
   const { go } = useNav();
   const roleLabel = isAux ? 'Auxiliar' : 'Cooperador';
+  const [photoBusy, setPhotoBusy] = useState(false);
+
+  const changePhoto = async () => {
+    if (!session || photoBusy) return;
+    setPhotoBusy(true);
+    try {
+      const url = await pickAndUploadPhoto('auxiliares', session.userId);
+      if (url) {
+        await updatePhotoUrl('auxiliares', session.userId, url);
+        await refresh();
+        show('Foto atualizada');
+      }
+    } catch {
+      show('Erro ao enviar a foto');
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
 
   const Item = ({
     Icon,
@@ -93,7 +116,33 @@ export default function Settings() {
       <ScreenScroll contentStyle={{ paddingBottom: 24 }}>
         {/* profile */}
         <Card pad style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Avatar name={session?.name ?? ''} size={58} />
+          <Pressable
+            onPress={changePhoto}
+            disabled={photoBusy}
+            accessibilityRole="button"
+            accessibilityLabel="Trocar foto do perfil">
+            <Avatar name={session?.name ?? ''} size={58} photoUrl={session?.photoUrl} />
+            <View
+              style={{
+                position: 'absolute',
+                right: -2,
+                bottom: -2,
+                width: 22,
+                height: 22,
+                borderRadius: 11,
+                backgroundColor: t.primary,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderWidth: 2,
+                borderColor: t.surface,
+              }}>
+              {photoBusy ? (
+                <ActivityIndicator size="small" color={t.onPrimary} />
+              ) : (
+                <IconPlus size={12} color={t.onPrimary} />
+              )}
+            </View>
+          </Pressable>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Txt weight="bold" size={17} numberOfLines={1}>
               {session?.name ?? ''}

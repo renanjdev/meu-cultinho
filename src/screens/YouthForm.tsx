@@ -1,14 +1,18 @@
 /** 6. Cadastro de Jovem — three sections; Salvar creates a real roster entry. */
 import React, { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useRoute, type RouteProp } from '@react-navigation/native';
+import { useTheme } from '../theme/ThemeProvider';
 import { useNav } from '../navigation/useNav';
-import { saveJovem, useGrupoOptions, useJovem } from '../data/repo';
+import { useToast } from '../components/Toast';
+import { saveJovem, updatePhotoUrl, useGrupoOptions, useJovem } from '../data/repo';
+import { pickImage, uploadPhoto } from '../data/photos';
 import { maskDateBR, validateDateBR } from '../data/date';
 import type { Youth } from '../data/seed';
 import type { RootStackParamList } from '../navigation/types';
 import {
   AppBar,
+  Avatar,
   Button,
   Field,
   FieldSection,
@@ -17,6 +21,7 @@ import {
   Segmented,
   SelectField,
   TextArea,
+  Txt,
 } from '../components/ui';
 import {
   IconBook,
@@ -25,6 +30,7 @@ import {
   IconHeart,
   IconLayers,
   IconMapPin,
+  IconPlus,
   IconUser,
   IconWhats,
 } from '../components/Icons';
@@ -33,7 +39,9 @@ import {
 type FormState = Partial<Youth> & { batizado?: string; batismo?: string };
 
 export default function YouthForm() {
+  const t = useTheme();
   const { go, back } = useNav();
+  const { show } = useToast();
   const route = useRoute<RouteProp<RootStackParamList, 'YouthForm'>>();
   const editId = route.params?.id;
   const { jovem } = useJovem(editId);
@@ -42,7 +50,17 @@ export default function YouthForm() {
   const [triedSave, setTriedSave] = useState(false);
   const [saving, setSaving] = useState(false);
   const [prefilled, setPrefilled] = useState(false);
+  const [photo, setPhoto] = useState<{ uri: string; isNew: boolean } | null>(null);
   const set = (k: keyof FormState) => (v: string) => setF((s) => ({ ...s, [k]: v }));
+
+  const pickPhoto = async () => {
+    try {
+      const uri = await pickImage();
+      if (uri) setPhoto({ uri, isNew: true });
+    } catch {
+      show('Erro ao selecionar a foto');
+    }
+  };
   const trimmedName = f.name?.trim() ?? '';
   const nameMissing = trimmedName.length === 0;
 
@@ -69,6 +87,7 @@ export default function YouthForm() {
         notes: jovem.notes,
         status: jovem.status,
       });
+      if (jovem.photoUrl) setPhoto({ uri: jovem.photoUrl, isNew: false });
       setPrefilled(true);
     }
   }, [jovem, prefilled]);
@@ -80,7 +99,7 @@ export default function YouthForm() {
     }
     setSaving(true);
     try {
-      await saveJovem({
+      const id = await saveJovem({
         id: editId,
         name: trimmedName,
         birth: f.birth,
@@ -95,8 +114,14 @@ export default function YouthForm() {
         notes: f.notes,
         status: f.status,
       });
+      if (photo?.isNew) {
+        const url = await uploadPhoto('jovens', id, photo.uri);
+        await updatePhotoUrl('jovens', id, url);
+      }
       if (back) back();
       else go('YouthList');
+    } catch {
+      show('Erro ao salvar o jovem');
     } finally {
       setSaving(false);
     }
@@ -106,6 +131,30 @@ export default function YouthForm() {
     <Screen>
       <AppBar title={editId ? 'Editar Jovem' : 'Cadastrar Jovem'} onBack={back} />
       <ScreenScroll contentStyle={{ paddingBottom: 24 }}>
+        <View style={{ alignItems: 'center', marginBottom: 4 }}>
+          <Pressable onPress={pickPhoto} accessibilityRole="button" accessibilityLabel="Foto do jovem">
+            <Avatar name={trimmedName || 'Jovem'} size={88} photoUrl={photo?.uri} />
+            <View
+              style={{
+                position: 'absolute',
+                right: -2,
+                bottom: -2,
+                width: 28,
+                height: 28,
+                borderRadius: 14,
+                backgroundColor: t.primary,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderWidth: 2,
+                borderColor: t.surface,
+              }}>
+              <IconPlus size={15} color={t.onPrimary} />
+            </View>
+          </Pressable>
+          <Txt weight="semibold" size={12.5} color={t.inkSoft} style={{ marginTop: 8 }}>
+            {photo ? 'Trocar foto' : 'Adicionar foto'}
+          </Txt>
+        </View>
         <FieldSection icon={<IconUser size={16} />}>Dados pessoais</FieldSection>
         <Field
           label="Nome completo"

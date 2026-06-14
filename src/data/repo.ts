@@ -40,6 +40,7 @@ export interface Jovem {
   phone: string;
   address: string;
   notes: string;
+  photoUrl: string;
 }
 
 export interface Auxiliar {
@@ -49,6 +50,7 @@ export interface Auxiliar {
   role: 'cooperador' | 'auxiliar';
   status: Status;
   phone: string;
+  photoUrl: string;
 }
 
 /* ----------------------------------------------------------------- Grupos */
@@ -89,7 +91,7 @@ export function useGrupoOptions() {
 
 /* ------------------------------------------------------------------ Jovens */
 const JOVEM_SELECT =
-  'id, name, birth, sex, batizado, batismo, status, grupo_id, father, mother, phone, address, notes, grupos(name, short)';
+  'id, name, birth, sex, batizado, batismo, status, grupo_id, father, mother, phone, address, notes, photo_url, grupos(name, short)';
 
 function mapJovem(j: any): Jovem {
   return {
@@ -109,6 +111,7 @@ function mapJovem(j: any): Jovem {
     phone: j.phone ?? '',
     address: j.address ?? '',
     notes: j.notes ?? '',
+    photoUrl: j.photo_url ?? '',
   };
 }
 
@@ -157,7 +160,8 @@ export interface JovemInput {
   status?: string;
 }
 
-export async function saveJovem(input: JovemInput): Promise<void> {
+/** Cria/atualiza e devolve o id do jovem (necessário p/ subir a foto depois). */
+export async function saveJovem(input: JovemInput): Promise<string> {
   const batizado = input.batizado ?? false;
   const row = {
     name: input.name,
@@ -174,14 +178,28 @@ export async function saveJovem(input: JovemInput): Promise<void> {
     notes: input.notes || null,
     status: input.status || 'Ativo',
   };
-  const { error } = input.id
-    ? await supabase.from('jovens').update(row).eq('id', input.id)
-    : await supabase.from('jovens').insert(row);
+  if (input.id) {
+    const { error } = await supabase.from('jovens').update(row).eq('id', input.id);
+    if (error) throw error;
+    return input.id;
+  }
+  const { data, error } = await supabase.from('jovens').insert(row).select('id').single();
   if (error) throw error;
+  return data.id as string;
 }
 
 export async function deleteJovem(id: string): Promise<void> {
   const { error } = await supabase.from('jovens').delete().eq('id', id);
+  if (error) throw error;
+}
+
+/** Grava a URL pública da foto numa linha de jovens/auxiliares. */
+export async function updatePhotoUrl(
+  table: 'jovens' | 'auxiliares',
+  id: string,
+  url: string,
+): Promise<void> {
+  const { error } = await supabase.from(table).update({ photo_url: url }).eq('id', id);
   if (error) throw error;
 }
 
@@ -192,9 +210,21 @@ export function useAuxiliares() {
   const reload = useCallback(async () => {
     const { data } = await supabase
       .from('auxiliares')
-      .select('id, name, username, role, status, phone')
+      .select('id, name, username, role, status, phone, photo_url')
       .order('name');
-    setAuxiliares((data ?? []) as Auxiliar[]);
+    setAuxiliares(
+      (data ?? []).map(
+        (a: any): Auxiliar => ({
+          id: a.id,
+          name: a.name,
+          username: a.username,
+          role: a.role,
+          status: a.status,
+          phone: a.phone ?? '',
+          photoUrl: a.photo_url ?? '',
+        }),
+      ),
+    );
     setLoading(false);
   }, []);
   useFocusEffect(useCallback(() => void reload(), [reload]));
@@ -459,6 +489,7 @@ export interface Birthday {
   name: string;
   birth: string; // dd/mm/aaaa
   kind: 'jovem' | 'auxiliar';
+  photoUrl: string;
 }
 
 /** Datas de nascimento de jovens + auxiliares (para marcar aniversários). */
@@ -467,15 +498,15 @@ export function useBirthdays() {
   const [loading, setLoading] = useState(true);
   const reload = useCallback(async () => {
     const [jr, ar] = await Promise.all([
-      supabase.from('jovens').select('name, birth'),
-      supabase.from('auxiliares').select('name, birth'),
+      supabase.from('jovens').select('name, birth, photo_url'),
+      supabase.from('auxiliares').select('name, birth, photo_url'),
     ]);
     const out: Birthday[] = [];
     (jr.data ?? []).forEach((r: any) => {
-      if (r.birth) out.push({ name: r.name, birth: r.birth, kind: 'jovem' });
+      if (r.birth) out.push({ name: r.name, birth: r.birth, kind: 'jovem', photoUrl: r.photo_url ?? '' });
     });
     (ar.data ?? []).forEach((r: any) => {
-      if (r.birth) out.push({ name: r.name, birth: r.birth, kind: 'auxiliar' });
+      if (r.birth) out.push({ name: r.name, birth: r.birth, kind: 'auxiliar', photoUrl: r.photo_url ?? '' });
     });
     setBirthdays(out);
     setLoading(false);

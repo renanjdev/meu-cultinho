@@ -84,7 +84,7 @@ export default function YouthList() {
             onPress={() => go('YouthDetail', { id: j.id })}
             accessibilityLabel={`${j.name}, ${j.age} anos, ${j.grupoShort}`}
           >
-            <Avatar name={j.name} size={48} />
+            <Avatar name={j.name} size={48} photoUrl={j.photoUrl} />
             <View style={{ flex: 1 }}>
               <Txt weight="bold" size={16} numberOfLines={1}>
                 {j.name}

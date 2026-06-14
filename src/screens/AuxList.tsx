@@ -31,7 +31,7 @@ export default function AuxList() {
           const roleLabel = a.role === 'cooperador' ? 'Cooperador' : 'Auxiliar';
           return (
           <CardRow key={a.id} accessibilityLabel={a.name + ', ' + roleLabel + ', ' + a.status} onPress={() => go('AuxForm')}>
-            <Avatar name={a.name} size={48} />
+            <Avatar name={a.name} size={48} photoUrl={a.photoUrl} />
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={{ flex: 1 }}>

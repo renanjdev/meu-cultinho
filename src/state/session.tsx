@@ -22,6 +22,7 @@ export interface Session {
   name: string;
   username: string;
   role: Role;
+  photoUrl: string;
 }
 
 interface SessionContextValue {
@@ -30,6 +31,8 @@ interface SessionContextValue {
   /** Throws on invalid credentials; the auth listener sets the session. */
   signIn: (username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  /** Recarrega o perfil do usuário logado (ex.: após trocar a foto). */
+  refresh: () => Promise<void>;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -37,12 +40,18 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 async function loadProfile(userId: string): Promise<Session | null> {
   const { data, error } = await supabase
     .from('auxiliares')
-    .select('name, username, role')
+    .select('name, username, role, photo_url')
     .eq('id', userId)
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) return null;
-  return { userId, name: data.name, username: data.username, role: data.role as Role };
+  return {
+    userId,
+    name: data.name,
+    username: data.username,
+    role: data.role as Role,
+    photoUrl: data.photo_url ?? '',
+  };
 }
 
 export function SessionProvider({ children }: { children: ReactNode }) {
@@ -94,8 +103,20 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setSession(null);
   }, []);
 
+  const refresh = useCallback(async () => {
+    const { data } = await supabase.auth.getSession();
+    const uid = data.session?.user.id;
+    if (!uid) return;
+    try {
+      const prof = await loadProfile(uid);
+      if (prof) setSession(prof);
+    } catch {
+      /* mantém a sessão atual em caso de erro de rede */
+    }
+  }, []);
+
   return (
-    <SessionContext.Provider value={{ session, loading, signIn, signOut }}>
+    <SessionContext.Provider value={{ session, loading, signIn, signOut, refresh }}>
       {children}
     </SessionContext.Provider>
   );

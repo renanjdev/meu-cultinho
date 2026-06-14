@@ -117,7 +117,7 @@ export default function Attendance() {
           return (
             <Card key={j.id} pad style={cardStyle}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <Avatar name={j.name} size={46} />
+                <Avatar name={j.name} size={46} photoUrl={j.photoUrl} />
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Txt weight="bold" size={16} numberOfLines={1}>
                     {j.name}
