@@ -42,10 +42,18 @@ if (!existsSync(htmlPath)) {
 }
 
 let html = readFileSync(htmlPath, 'utf8');
-const MARKER = '<!-- pwa:meu-cultinho -->';
 
+// 2a) idioma pt-BR no <html> — evita o prompt de tradução do navegador
+if (/<html lang="[^"]*">/.test(html)) {
+  html = html.replace(/<html lang="[^"]*">/, '<html lang="pt-BR">');
+} else {
+  html = html.replace('<html>', '<html lang="pt-BR">');
+}
+
+// 2b) tags de PWA no <head> (idempotente)
+const MARKER = '<!-- pwa:meu-cultinho -->';
 if (html.includes(MARKER)) {
-  console.log('[pwa] tags já presentes — nada a fazer.');
+  console.log('[pwa] tags já presentes — apenas idioma ajustado.');
 } else {
   const tags = `    ${MARKER}
     <link rel="manifest" href="/manifest.webmanifest" />
@@ -55,9 +63,10 @@ if (html.includes(MARKER)) {
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Meu Cultinho" />
     <link rel="apple-touch-icon" href="/icons/icon.png" />
-    <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})});}</script>
+    <script src="/sw-register.js" defer></script>
 `;
   html = html.replace('</head>', `${tags}  </head>`);
-  writeFileSync(htmlPath, html);
   console.log('[pwa] tags de PWA injetadas em dist/index.html');
 }
+
+writeFileSync(htmlPath, html);
