@@ -4,7 +4,7 @@ import { useRoute, type RouteProp } from '@react-navigation/native';
 import { useNav } from '../navigation/useNav';
 import { useToast } from '../components/Toast';
 import { saveEvento, deleteEvento, useEvento, isoToBR, brToISO } from '../data/repo';
-import { maskDateBR, validateDateBR } from '../data/date';
+import { validateDateBR } from '../data/date';
 import type { RootStackParamList } from '../navigation/types';
 import {
   AppBar,
@@ -83,10 +83,10 @@ export default function EventForm() {
         />
         <Field
           label="Data"
+          dateMask
           placeholder="dd/mm/aaaa"
           value={f.data}
-          onChangeText={(v) => set('data')(maskDateBR(v))}
-          keyboardType="number-pad"
+          onChangeText={set('data')}
           icon={<IconCalendar size={17} />}
           error={showDateErr ? dateErr : undefined}
         />
