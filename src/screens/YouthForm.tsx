@@ -153,7 +153,7 @@ export default function YouthForm() {
         <TextArea label="Observações" placeholder="Anotações sobre o jovem..." value={f.notes} onChangeText={set('notes')} />
         <Segmented label="Status" value={f.status} options={['Ativo', 'Inativo']} onChange={set('status')} />
 
-        <View style={{ height: 4 }} />
+        <View style={{ height: 8 }} />
         <Button
           variant="primary"
           icon={<IconCheck size={19} />}

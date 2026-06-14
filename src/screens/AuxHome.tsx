@@ -45,8 +45,8 @@ export default function AuxHome() {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 10,
-          paddingHorizontal: 14,
+          gap: 12,
+          paddingHorizontal: 16,
           paddingVertical: 10,
           minHeight: 58,
           backgroundColor: t.surface,
@@ -71,7 +71,7 @@ export default function AuxHome() {
         {/* alert */}
         <View
           style={[
-            { flexDirection: 'row', gap: 13, alignItems: 'flex-start', backgroundColor: t.goldSoft, borderRadius: t.radiusCard, padding: 16 },
+            { flexDirection: 'row', gap: 12, alignItems: 'flex-start', backgroundColor: t.goldSoft, borderRadius: t.radiusCard, padding: 16 },
             t.shadowCard,
           ]}>
           <View
@@ -99,7 +99,7 @@ export default function AuxHome() {
         </View>
 
         <SectionLabel>Ações rápidas</SectionLabel>
-        <View style={{ flexDirection: 'row', gap: 11 }}>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Cadastrar jovem"
@@ -109,7 +109,7 @@ export default function AuxHome() {
               transform: [{ scale: pressed ? 0.97 : 1 }],
             })}
             onPress={() => go('YouthForm')}>
-            <Card pad style={{ gap: 9 }}>
+            <Card pad style={{ gap: 8 }}>
               <View
                 style={{
                   width: 40,
@@ -135,7 +135,7 @@ export default function AuxHome() {
               transform: [{ scale: pressed ? 0.97 : 1 }],
             })}
             onPress={() => go('YouthList')}>
-            <Card pad style={{ gap: 9 }}>
+            <Card pad style={{ gap: 8 }}>
               <View
                 style={{
                   width: 40,
@@ -155,10 +155,10 @@ export default function AuxHome() {
         </View>
 
         <SectionLabel>Meus grupos</SectionLabel>
-        <View style={{ gap: 14 }}>
+        <View style={{ gap: 12 }}>
           {myGroups.map((g) => (
             <Card key={g.id} pad>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <GroupIcon icon={g.icon} />
                 <View style={{ flex: 1 }}>
                   <Txt weight="bold" size={15.5} numberOfLines={1}>

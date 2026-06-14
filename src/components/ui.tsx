@@ -112,12 +112,13 @@ export function ScreenScroll({
   children: ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
 }) {
+  const t = useTheme();
   return (
     <ScrollView
       style={{ flex: 1 }}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
-      contentContainerStyle={[{ padding: 16, gap: 14 }, contentStyle]}>
+      contentContainerStyle={[{ padding: t.space.lg, gap: t.space.lg }, contentStyle]}>
       {children}
     </ScrollView>
   );
@@ -143,7 +144,7 @@ export function Card({
           borderColor: t.line,
         },
         t.shadowCard,
-        pad && { padding: 16 },
+        pad && { padding: t.space.lg },
         style,
       ]}>
       {children}
@@ -172,13 +173,13 @@ export function CardRow({
         {
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 13,
+          gap: t.space.md,
           backgroundColor: t.surface,
           borderWidth: 1,
           borderColor: t.line,
           borderRadius: t.radiusCard,
-          paddingVertical: 13,
-          paddingHorizontal: 14,
+          paddingVertical: t.space.md,
+          paddingHorizontal: t.space.lg,
         },
         t.shadowCard,
         pressed && { transform: [{ scale: 0.985 }] },
@@ -276,9 +277,9 @@ export function AppBar({
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
+        gap: t.space.sm,
+        paddingHorizontal: t.space.lg,
+        paddingVertical: t.space.sm,
         minHeight: 58,
         backgroundColor: flat ? 'transparent' : t.surface,
         borderBottomWidth: flat ? 0 : 1,
@@ -290,7 +291,7 @@ export function AppBar({
         </IconButton>
       ) : null}
       <View style={{ flex: 1 }}>
-        <Txt weight="bold" style={{ fontSize: 19 }} numberOfLines={1}>
+        <Txt weight="extrabold" style={{ fontSize: 19 }} numberOfLines={1}>
           {title}
         </Txt>
         {sub ? (
@@ -411,12 +412,12 @@ export function Button({
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 9,
+          gap: t.space.sm,
           backgroundColor: bgColor,
           minHeight: 44,
           borderRadius: sm ? 11 : t.radiusBtn,
-          paddingVertical: sm ? 11 : 14,
-          paddingHorizontal: sm ? 12 : 18,
+          paddingVertical: sm ? t.space.md : t.space.lg,
+          paddingHorizontal: sm ? t.space.md : t.space.lg,
           alignSelf: sm ? 'flex-start' : 'stretch',
         },
         variant === 'primary' && !bg && t.shadowFab,
@@ -465,7 +466,7 @@ export function Field({
   const [focused, setFocused] = useState(false);
   const borderColor = error ? t.absent : focused ? t.primary : t.line;
   return (
-    <View style={{ gap: 7 }}>
+    <View style={{ gap: t.space.sm }}>
       {label ? (
         <Txt weight="bold" size={13} color={t.inkSoft}>
           {label}
@@ -499,9 +500,9 @@ export function Field({
             borderWidth: 1.5,
             borderColor,
             borderRadius: t.radiusField,
-            paddingVertical: 13,
-            paddingHorizontal: 14,
-            paddingLeft: icon ? 42 : 14,
+            paddingVertical: t.space.md,
+            paddingHorizontal: t.space.md,
+            paddingLeft: icon ? 42 : t.space.md,
           }}
         />
       </View>
@@ -528,7 +529,7 @@ export function TextArea({
   const t = useTheme();
   const [focused, setFocused] = useState(false);
   return (
-    <View style={{ gap: 7 }}>
+    <View style={{ gap: t.space.sm }}>
       {label ? (
         <Txt weight="bold" size={13} color={t.inkSoft}>
           {label}
@@ -553,7 +554,7 @@ export function TextArea({
           borderWidth: 1.5,
           borderColor: focused ? t.primary : t.line,
           borderRadius: t.radiusField,
-          padding: 14,
+          padding: t.space.md,
           minHeight: 84,
         }}
       />
@@ -590,17 +591,17 @@ function OptionSheet({
               backgroundColor: t.surface,
               borderTopLeftRadius: 24,
               borderTopRightRadius: 24,
-              paddingTop: 14,
-              paddingBottom: insets.bottom + 12,
+              paddingTop: t.space.lg,
+              paddingBottom: insets.bottom + t.space.md,
               maxHeight: '70%',
             },
             t.shadowPop,
           ]}>
           <View
-            style={{ width: 38, height: 4, borderRadius: 99, backgroundColor: t.line, alignSelf: 'center', marginBottom: 10 }}
+            style={{ width: 38, height: 4, borderRadius: 99, backgroundColor: t.line, alignSelf: 'center', marginBottom: t.space.md }}
           />
           {title ? (
-            <Txt weight="bold" size={16} style={{ paddingHorizontal: 20, paddingBottom: 6 }}>
+            <Txt weight="bold" size={16} style={{ paddingHorizontal: 20, paddingBottom: t.space.sm }}>
               {title}
             </Txt>
           ) : null}
@@ -618,7 +619,7 @@ function OptionSheet({
                       flexDirection: 'row',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      paddingVertical: 14,
+                      paddingVertical: t.space.lg,
                       paddingHorizontal: 20,
                     },
                     pressed && { backgroundColor: t.surface2 },
@@ -656,7 +657,7 @@ export function SelectField({
   const current = options.find((o) => o.value === value);
   const currentLabel = current?.label ?? options[0]?.label ?? 'Selecione...';
   return (
-    <View style={{ gap: 7 }}>
+    <View style={{ gap: t.space.sm }}>
       {label ? (
         <Txt weight="bold" size={13} color={t.inkSoft}>
           {label}
@@ -674,8 +675,8 @@ export function SelectField({
             borderWidth: 1.5,
             borderColor: open ? t.primary : t.line,
             borderRadius: t.radiusField,
-            paddingVertical: 13,
-            paddingHorizontal: 14,
+            paddingVertical: t.space.md,
+            paddingHorizontal: t.space.md,
           },
           pressed && { borderColor: t.primary, opacity: 0.9 },
         ]}>
@@ -712,7 +713,7 @@ export function Segmented({
 }) {
   const t = useTheme();
   return (
-    <View style={{ gap: 7 }}>
+    <View style={{ gap: t.space.sm }}>
       {label ? (
         <Txt weight="bold" size={13} color={t.inkSoft}>
           {label}
@@ -728,7 +729,7 @@ export function Segmented({
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
               style={({ pressed }) => [
-                { flex: 1, minHeight: 44, paddingVertical: 11, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+                { flex: 1, minHeight: 44, paddingVertical: t.space.md, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
                 on && { backgroundColor: t.surface, ...t.shadowCard },
                 pressed && { opacity: 0.7 },
               ]}>
@@ -746,7 +747,7 @@ export function Segmented({
 export function FieldSection({ icon, children }: { icon?: ReactElement<IconProps>; children: ReactNode }) {
   const t = useTheme();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4, marginHorizontal: 2 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space.sm, marginTop: t.space.sm, marginHorizontal: 2 }}>
       {tint(icon, t.primaryDeep)}
       <Txt weight="bold" size={13} color={t.primaryDeep} style={{ textTransform: 'uppercase', letterSpacing: 0.8 }}>
         {children}
@@ -773,13 +774,13 @@ export function SearchBar({
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
+        gap: t.space.sm,
         backgroundColor: t.surface,
         borderWidth: 1.5,
         borderColor: t.line,
         borderRadius: 999,
-        paddingVertical: 11,
-        paddingHorizontal: 16,
+        paddingVertical: t.space.md,
+        paddingHorizontal: t.space.lg,
       }}>
       <IconSearch size={19} color={t.inkSoft} />
       <TextInput
@@ -901,7 +902,7 @@ export function StatTile({
   return (
     <View
       style={[
-        { backgroundColor: t.surface, borderWidth: 1, borderColor: t.line, borderRadius: t.radiusCard, padding: 14 },
+        { backgroundColor: t.surface, borderWidth: 1, borderColor: t.line, borderRadius: t.radiusCard, padding: t.space.md },
         t.shadowCard,
         style,
       ]}>
@@ -923,7 +924,7 @@ export function StatTile({
           </View>
         ) : null}
       </View>
-      <Txt weight="semibold" size={12} color={t.inkSoft} style={{ marginTop: 5 }}>
+      <Txt weight="semibold" size={12} color={t.inkSoft} style={{ marginTop: t.space.xs }}>
         {label}
       </Txt>
     </View>
@@ -1063,16 +1064,16 @@ export function ConfirmDialog({
               backgroundColor: t.surface,
               borderTopLeftRadius: 24,
               borderTopRightRadius: 24,
-              padding: 18,
-              paddingTop: 22,
-              paddingBottom: insets.bottom + 18,
+              padding: t.space.lg,
+              paddingTop: t.space.xl,
+              paddingBottom: insets.bottom + t.space.lg,
             },
             t.shadowPop,
           ]}>
           <View
             style={{ width: 38, height: 4, borderRadius: 99, backgroundColor: t.line, alignSelf: 'center', marginBottom: 16 }}
           />
-          <View style={{ flexDirection: 'row', gap: 13, alignItems: 'flex-start' }}>
+          <View style={{ flexDirection: 'row', gap: t.space.md, alignItems: 'flex-start' }}>
             <View
               style={{
                 width: 44,
@@ -1093,7 +1094,7 @@ export function ConfirmDialog({
               </Txt>
             </View>
           </View>
-          <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>
+          <View style={{ flexDirection: 'row', gap: t.space.md, marginTop: t.space.xl }}>
             <Button variant="secondary" onPress={onCancel} style={{ flex: 1 }}>
               Cancelar
             </Button>
@@ -1181,11 +1182,11 @@ export function SumPill({ num, label, tone }: { num: ReactNode; label: string; t
   };
   const [bg, fg] = map[tone];
   return (
-    <View style={{ flex: 1, backgroundColor: bg, borderRadius: 14, paddingVertical: 9, paddingHorizontal: 4, alignItems: 'center' }}>
+    <View style={{ flex: 1, backgroundColor: bg, borderRadius: 14, paddingVertical: t.space.sm, paddingHorizontal: t.space.xs, alignItems: 'center' }}>
       <Txt weight="bold" color={fg} style={{ fontSize: 21, lineHeight: 22 }}>
         {num}
       </Txt>
-      <Txt weight="bold" size={10.5} color={t.inkSoft} style={{ marginTop: 3 }}>
+      <Txt weight="bold" size={10.5} color={t.inkSoft} style={{ marginTop: t.space.xs }}>
         {label}
       </Txt>
     </View>
@@ -1247,10 +1248,10 @@ export function SectionLabel({ children, action }: { children: ReactNode; action
         alignItems: 'center',
         justifyContent: 'space-between',
         marginHorizontal: 2,
-        marginTop: 6,
-        gap: 12,
+        marginTop: t.space.md,
+        gap: t.space.md,
       }}>
-      <Txt weight="bold" size={13} color={t.inkSoft}>
+      <Txt weight="bold" size={14} color={t.ink}>
         {children}
       </Txt>
       {action}

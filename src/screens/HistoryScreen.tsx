@@ -36,8 +36,8 @@ export default function HistoryScreen() {
   return (
     <Screen>
       <AppBar title="Histórico de Frequência" onBack={back} />
-      <View style={{ paddingHorizontal: 16, paddingVertical: 12, backgroundColor: t.surface, borderBottomWidth: 1, borderBottomColor: t.line, gap: 10 }}>
-        <View style={{ flexDirection: 'row', gap: 10 }}>
+      <View style={{ paddingHorizontal: 16, paddingVertical: 12, backgroundColor: t.surface, borderBottomWidth: 1, borderBottomColor: t.line, gap: 12 }}>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
           <View style={{ flex: 1 }}>
             <Field label="Primeira reunião" value={dateFrom} editable={false} icon={<IconCalendar size={16} />} />
           </View>
@@ -88,21 +88,21 @@ export default function HistoryScreen() {
                   </View>
                   <Chip tone={tone}>{h.freq}%</Chip>
                 </View>
-                <View style={{ flexDirection: 'row', gap: 14, marginTop: 11, alignItems: 'center' }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <View style={{ flexDirection: 'row', gap: 12, marginTop: 12, alignItems: 'center' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                     <IconCheck size={15} color={t.present} />
                     <Txt weight="bold" size={13} color={t.present}>
                       {h.present} presentes
                     </Txt>
                   </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                     <IconX size={15} color={t.absent} />
                     <Txt weight="bold" size={13} color={t.absent}>
                       {h.absent} faltas
                     </Txt>
                   </View>
                 </View>
-                <View style={{ marginTop: 10 }}>
+                <View style={{ marginTop: 12 }}>
                   <ProgressBar value={h.freq} color={barColor} />
                 </View>
               </CardRow>

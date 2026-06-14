@@ -52,7 +52,7 @@ export default function AuxForm() {
         <Segmented label="Tipo de usuário" value={f.role} options={['Administrador', 'Auxiliar']} onChange={set('role')} />
         <Segmented label="Status" value={f.status} options={['Ativo', 'Inativo']} onChange={set('status')} />
 
-        <View style={{ height: 4 }} />
+        <View style={{ height: 8 }} />
         <Button variant="primary" icon={<IconCheck size={19} />} disabled={!canSave} onPress={() => go('AuxList')}>
           Salvar auxiliar
         </Button>

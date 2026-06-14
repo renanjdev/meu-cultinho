@@ -78,8 +78,8 @@ export default function AdminHome() {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 10,
-          paddingHorizontal: 14,
+          gap: 12,
+          paddingHorizontal: 16,
           paddingVertical: 10,
           minHeight: 58,
           backgroundColor: t.surface,
@@ -102,13 +102,13 @@ export default function AdminHome() {
 
       <ScreenScroll contentStyle={{ paddingBottom: 24 }}>
         {/* summary grid */}
-        <View style={{ gap: 11 }}>
-          <View style={{ flexDirection: 'row', gap: 11 }}>
+        <View style={{ gap: 12 }}>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
             {SUMMARY.slice(0, 2).map((s) => (
               <StatTile key={s.label} num={s.num} label={s.label} tone={s.tone} icon={<s.Icon size={18} />} style={{ flex: 1 }} />
             ))}
           </View>
-          <View style={{ flexDirection: 'row', gap: 11 }}>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
             {SUMMARY.slice(2, 4).map((s) => (
               <StatTile key={s.label} num={s.num} label={s.label} tone={s.tone} icon={<s.Icon size={18} />} style={{ flex: 1 }} />
             ))}
@@ -117,7 +117,7 @@ export default function AdminHome() {
 
         {/* quick actions */}
         <SectionLabel>Ações rápidas</SectionLabel>
-        <View style={{ gap: 14 }}>
+        <View style={{ gap: 12 }}>
           {ACTIONS.map((a) => (
             <CardRow
               key={a.label}
@@ -150,7 +150,7 @@ export default function AdminHome() {
 
         {/* groups today */}
         <SectionLabel action={<Link onPress={() => go('GroupList')}>Ver todos</Link>}>Grupos de hoje</SectionLabel>
-        <View style={{ gap: 14 }}>
+        <View style={{ gap: 12 }}>
           {grupos.slice(0, 3).map((g) => (
             <CardRow key={g.id} onPress={() => go('Attendance', { group: g.id })}>
               <GroupIcon icon={g.icon} />

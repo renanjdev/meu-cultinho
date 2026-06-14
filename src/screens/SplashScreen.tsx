@@ -57,7 +57,7 @@ export default function SplashScreen() {
         }}>
         <View style={{ flex: 1 }} />
         <LogoMark size={104} />
-        <Txt weight="bold" numberOfLines={1} style={{ fontSize: 34, marginTop: 26 }}>
+        <Txt weight="bold" numberOfLines={1} style={{ fontSize: 34, marginTop: 24 }}>
           Meu Cultinho
         </Txt>
         <Txt
@@ -71,7 +71,7 @@ export default function SplashScreen() {
         <View
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          style={{ flexDirection: 'row', gap: 7, marginBottom: 18 }}>
+          style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
           <Dot delay={0} />
           <Dot delay={200} />
           <Dot delay={400} />
