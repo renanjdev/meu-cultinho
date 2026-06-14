@@ -55,6 +55,7 @@ export interface Theme {
   inkSoft: string;
   inkFaint: string;
   line: string;
+  scrim: string; // overlay escuro dos bottom-sheets/modais
 
   // shape
   radiusCard: number;
@@ -134,6 +135,7 @@ export const THEMES: Record<ThemeName, Theme> = {
     inkSoft: '#5a5f72',
     inkFaint: '#9a9eb0',
     line: '#e7e7f1',
+    scrim: 'rgba(20,28,40,0.42)',
     radiusCard: 26,
     radiusBtn: 18,
     radiusField: 16,

@@ -61,9 +61,6 @@ function tint(icon: ReactElement<IconProps> | undefined, color: string) {
   return icon ? React.cloneElement(icon, { color: icon.props.color ?? color }) : null;
 }
 
-// Shared bottom-sheet scrim color (OptionSheet + ConfirmDialog).
-const SCRIM = 'rgba(20,28,40,0.42)';
-
 export interface Option {
   value: string;
   label: string;
@@ -626,7 +623,7 @@ function OptionSheet({
     <Modal visible={open} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable
         onPress={onClose}
-        style={{ flex: 1, backgroundColor: SCRIM, justifyContent: 'flex-end' }}>
+        style={{ flex: 1, backgroundColor: t.scrim, justifyContent: 'flex-end' }}>
         <Pressable
           onPress={() => {}}
           style={[
@@ -767,7 +764,7 @@ export function Segmented({
       <View
         accessibilityRole="radiogroup"
         accessibilityLabel={label}
-        style={{ flexDirection: 'row', gap: 6, backgroundColor: t.surface2, padding: 4, borderRadius: 14 }}>
+        style={{ flexDirection: 'row', gap: t.space.xs, backgroundColor: t.surface2, padding: t.space.xs, borderRadius: 14 }}>
         {options.map((o) => {
           const on = value === o;
           return (
@@ -1104,7 +1101,7 @@ export function ConfirmDialog({
     <Modal visible={open} transparent animationType="slide" onRequestClose={onCancel}>
       <Pressable
         onPress={onCancel}
-        style={{ flex: 1, backgroundColor: SCRIM, justifyContent: 'flex-end' }}>
+        style={{ flex: 1, backgroundColor: t.scrim, justifyContent: 'flex-end' }}>
         <Pressable
           onPress={() => {}}
           style={[
