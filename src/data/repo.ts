@@ -287,6 +287,17 @@ export function isoDayMonth(iso: string): string {
   return `${String(d).padStart(2, '0')} ${MONTHS_PT[m - 1]}`;
 }
 
+export const MONTHS_FULL_PT = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+];
+
+/** dd/mm/aaaa -> YYYY-MM-DD (para colunas date). Retorna '' se inválida. */
+export function brToISO(br: string): string {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec((br ?? '').trim());
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : '';
+}
+
 const pct = (p: number, a: number) => (p + a ? Math.round((p / (p + a)) * 100) : 0);
 
 /* ----------------------------------------------------------- Relatórios */
@@ -441,4 +452,102 @@ export function useHistory(grupoId: string) {
   }, [grupoId]);
   useFocusEffect(useCallback(() => void reload(), [reload]));
   return { rows, loading, reload };
+}
+
+/* ------------------------------------------------------ Calendário / Aniversários */
+export interface Birthday {
+  name: string;
+  birth: string; // dd/mm/aaaa
+  kind: 'jovem' | 'auxiliar';
+}
+
+/** Datas de nascimento de jovens + auxiliares (para marcar aniversários). */
+export function useBirthdays() {
+  const [birthdays, setBirthdays] = useState<Birthday[]>([]);
+  const [loading, setLoading] = useState(true);
+  const reload = useCallback(async () => {
+    const [jr, ar] = await Promise.all([
+      supabase.from('jovens').select('name, birth'),
+      supabase.from('auxiliares').select('name, birth'),
+    ]);
+    const out: Birthday[] = [];
+    (jr.data ?? []).forEach((r: any) => {
+      if (r.birth) out.push({ name: r.name, birth: r.birth, kind: 'jovem' });
+    });
+    (ar.data ?? []).forEach((r: any) => {
+      if (r.birth) out.push({ name: r.name, birth: r.birth, kind: 'auxiliar' });
+    });
+    setBirthdays(out);
+    setLoading(false);
+  }, []);
+  useFocusEffect(useCallback(() => void reload(), [reload]));
+  return { birthdays, loading, reload };
+}
+
+/* -------------------------------------------------------------------- Eventos */
+export interface Evento {
+  id: string;
+  title: string;
+  data: string; // YYYY-MM-DD
+  descricao: string;
+}
+
+const mapEvento = (e: any): Evento => ({
+  id: e.id,
+  title: e.title,
+  data: e.data,
+  descricao: e.descricao ?? '',
+});
+
+export function useEventos() {
+  const [eventos, setEventos] = useState<Evento[]>([]);
+  const [loading, setLoading] = useState(true);
+  const reload = useCallback(async () => {
+    const { data } = await supabase.from('eventos').select('id, title, data, descricao').order('data');
+    setEventos((data ?? []).map(mapEvento));
+    setLoading(false);
+  }, []);
+  useFocusEffect(useCallback(() => void reload(), [reload]));
+  return { eventos, loading, reload };
+}
+
+export function useEvento(id: string | undefined) {
+  const [evento, setEvento] = useState<Evento | null>(null);
+  const [loading, setLoading] = useState(true);
+  const reload = useCallback(async () => {
+    if (!id) {
+      setEvento(null);
+      setLoading(false);
+      return;
+    }
+    const { data } = await supabase
+      .from('eventos')
+      .select('id, title, data, descricao')
+      .eq('id', id)
+      .maybeSingle();
+    setEvento(data ? mapEvento(data) : null);
+    setLoading(false);
+  }, [id]);
+  useFocusEffect(useCallback(() => void reload(), [reload]));
+  return { evento, loading, reload };
+}
+
+export interface EventoInput {
+  id?: string;
+  title: string;
+  data: string; // YYYY-MM-DD
+  descricao?: string;
+}
+
+export async function saveEvento(input: EventoInput): Promise<void> {
+  const row = { title: input.title.trim(), data: input.data, descricao: input.descricao?.trim() || null };
+  const { error } = input.id
+    ? await supabase.from('eventos').update(row).eq('id', input.id)
+    : await supabase.from('eventos').insert(row);
+  if (error) throw error;
+}
+
+export async function deleteEvento(id: string): Promise<void> {
+  const { error } = await supabase.from('eventos').delete().eq('id', id);
+  if (error) throw error;
 }

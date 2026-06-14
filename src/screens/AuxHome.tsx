@@ -11,6 +11,7 @@ import {
   BottomNav,
   Button,
   Card,
+  CardRow,
   GroupIcon,
   IconButton,
   Screen,
@@ -21,6 +22,8 @@ import {
 import {
   IconAlert,
   IconBell,
+  IconCalendar,
+  IconChevR,
   IconClipboard,
   IconClock,
   IconHome,
@@ -153,6 +156,30 @@ export default function AuxHome() {
             </Card>
           </Pressable>
         </View>
+
+        <CardRow onPress={() => go('Calendar')} accessibilityLabel="Calendário">
+          <View
+            style={{
+              width: 46,
+              height: 46,
+              borderRadius: 14,
+              backgroundColor: t.primarySoft,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+            <IconCalendar size={20} color={t.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Txt weight="bold" size={15.5} numberOfLines={1}>
+              Calendário
+            </Txt>
+            <Txt weight="semibold" size={12.5} color={t.inkSoft} numberOfLines={1}>
+              Aniversários e eventos
+            </Txt>
+          </View>
+          <IconChevR size={20} color={t.ink} opacity={0.5} />
+        </CardRow>
 
         <SectionLabel>Meus grupos</SectionLabel>
         <View style={{ gap: 12 }}>

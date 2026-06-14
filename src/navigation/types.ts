@@ -22,6 +22,8 @@ export type RootStackParamList = {
   Attendance: { group?: string } | undefined;
   History: undefined;
   Reports: undefined;
+  Calendar: undefined;
+  EventForm: { id?: string; date?: string } | undefined;
   Settings: undefined;
 };
 
