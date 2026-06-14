@@ -83,10 +83,20 @@ export function useGrupos() {
   return { grupos, loading, reload };
 }
 
-/** Plain options for the Grupo <SelectField>. */
+/**
+ * Opções enxutas para o <SelectField> de Grupo. Busca só id/name — sem o join
+ * de auxiliar nem a agregação `jovens(count)` do useGrupos (caros e inúteis
+ * aqui). Retorna um array de state ESTÁVEL: não re-aloca a cada tecla digitada
+ * no formulário (a identidade só muda quando os grupos mudam, no foco da tela).
+ */
 export function useGrupoOptions() {
-  const { grupos } = useGrupos();
-  return grupos.map((g) => ({ value: g.id, label: g.name }));
+  const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
+  const reload = useCallback(async () => {
+    const { data } = await supabase.from('grupos').select('id, name').order('name');
+    setOptions((data ?? []).map((g: any) => ({ value: g.id, label: g.name })));
+  }, []);
+  useFocusEffect(useCallback(() => void reload(), [reload]));
+  return options;
 }
 
 /* ------------------------------------------------------------------ Jovens */
