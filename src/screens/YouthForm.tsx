@@ -203,7 +203,7 @@ export default function YouthForm() {
         <FieldSection icon={<IconHeart size={16} />}>Responsáveis</FieldSection>
         <Field label="Nome do pai" placeholder="Ex: Carlos Souza" value={f.father} onChangeText={set('father')} />
         <Field label="Nome da mãe" placeholder="Ex: Maria Souza" value={f.mother} onChangeText={set('mother')} />
-        <Field label="WhatsApp do responsável" placeholder="(11) 90000-0000" value={f.phone} onChangeText={set('phone')} keyboardType="phone-pad" icon={<IconWhats size={17} />} />
+        <Field label="WhatsApp do responsável" phoneMask placeholder="(11) 99999-8888" value={f.phone} onChangeText={set('phone')} icon={<IconWhats size={17} />} />
         <Field label="Endereço" placeholder="Rua, número, bairro" value={f.address} onChangeText={set('address')} icon={<IconMapPin size={17} />} />
 
         <FieldSection icon={<IconLayers size={16} />}>Grupo e observações</FieldSection>

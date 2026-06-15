@@ -39,6 +39,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import type { FontWeightName } from '../theme/tokens';
 import { avatarColor, initials } from '../data/seed';
 import { maskDateBR } from '../data/date';
+import { maskPhoneBR } from '../data/phone';
 import type { GroupIconName, AttendanceMark, YouthStatus } from '../data/seed';
 import type { RouteName } from '../navigation/types';
 import {
@@ -471,6 +472,7 @@ export function Field({
   error,
   required,
   dateMask,
+  phoneMask,
   accessibilityLabel,
   autoComplete,
   textContentType,
@@ -487,6 +489,8 @@ export function Field({
   required?: boolean;
   /** Formata dd/mm/aaaa enquanto digita (+ teclado numérico). */
   dateMask?: boolean;
+  /** Formata (11) 99999-8888 enquanto digita (+ teclado de telefone). */
+  phoneMask?: boolean;
   accessibilityLabel?: string;
   autoComplete?: TextInputProps['autoComplete'];
   textContentType?: TextInputProps['textContentType'];
@@ -495,7 +499,11 @@ export function Field({
   const errId = useId();
   // datas: aplica a máscara dd/mm/aaaa internamente, então nenhum campo esquece
   const handleChange =
-    dateMask && onChangeText ? (v: string) => onChangeText(maskDateBR(v)) : onChangeText;
+    dateMask && onChangeText
+      ? (v: string) => onChangeText(maskDateBR(v))
+      : phoneMask && onChangeText
+        ? (v: string) => onChangeText(maskPhoneBR(v))
+        : onChangeText;
   const [focused, setFocused] = useState(false);
   const borderColor = error ? t.absent : focused ? t.primary : t.line;
   // react-native-web encaminha aria-*: marca inválido + aponta a mensagem de
@@ -528,8 +536,8 @@ export function Field({
           placeholder={placeholder}
           placeholderTextColor={t.inkFaint}
           secureTextEntry={secureTextEntry}
-          keyboardType={dateMask ? 'number-pad' : keyboardType}
-          maxLength={dateMask ? 10 : undefined}
+          keyboardType={dateMask ? 'number-pad' : phoneMask ? 'phone-pad' : keyboardType}
+          maxLength={dateMask ? 10 : phoneMask ? 15 : undefined}
           editable={editable}
           accessibilityLabel={accessibilityLabel ?? label}
           autoComplete={autoComplete}

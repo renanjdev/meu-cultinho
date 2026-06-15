@@ -207,10 +207,10 @@ export default function AuxForm() {
         />
         <Field
           label="WhatsApp"
+          phoneMask
           value={f.phone}
           onChangeText={set('phone')}
-          placeholder="(11) 90000-0000"
-          keyboardType="phone-pad"
+          placeholder="(11) 99999-8888"
           icon={<IconWhats size={17} />}
         />
         <Field
