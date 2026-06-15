@@ -17,7 +17,7 @@ export type RootStackParamList = {
   YouthForm: { id?: string } | undefined;
   YouthDetail: { id: string };
   AuxList: undefined;
-  AuxForm: undefined;
+  AuxForm: { id?: string } | undefined;
   InviteAux: undefined;
   GroupList: undefined;
   GroupForm: { id?: string } | undefined;

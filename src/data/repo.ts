@@ -33,6 +33,7 @@ export interface Jovem {
   sex: 'Masculino' | 'Feminino' | null;
   batizado: boolean;
   batismo: string;
+  selado: boolean;
   status: Status;
   grupoId: string | null;
   grupoShort: string;
@@ -216,7 +217,7 @@ export function useMyGrupos(auxId: string | undefined) {
 
 /* ------------------------------------------------------------------ Jovens */
 const JOVEM_SELECT =
-  'id, name, birth, sex, batizado, batismo, status, grupo_id, father, mother, phone, address, notes, photo_url, grupos(name, short)';
+  'id, name, birth, sex, batizado, batismo, selado, status, grupo_id, father, mother, phone, address, notes, photo_url, grupos(name, short)';
 
 function mapJovem(j: any): Jovem {
   return {
@@ -228,6 +229,7 @@ function mapJovem(j: any): Jovem {
     sex: j.sex,
     batizado: j.batizado ?? false,
     batismo: j.batismo ?? '',
+    selado: j.selado ?? false,
     status: j.status,
     grupoId: j.grupo_id,
     grupoShort: j.grupos?.short ?? j.grupos?.name ?? '—',
@@ -323,6 +325,9 @@ export interface JovemInput {
   sex?: string;
   batizado?: boolean;
   batismo?: string;
+  /** "selado com o Espírito Santo" — só é gravado quando explicitamente passado
+   *  (telas que não conhecem o campo não o apagam). */
+  selado?: boolean;
   grupo_id?: string | null;
   father?: string;
   mother?: string;
@@ -335,7 +340,7 @@ export interface JovemInput {
 /** Cria/atualiza e devolve o id do jovem (necessário p/ subir a foto depois). */
 export async function saveJovem(input: JovemInput): Promise<string> {
   const batizado = input.batizado ?? false;
-  const row = {
+  const row: Record<string, unknown> = {
     name: input.name,
     birth: input.birth || null,
     sex: input.sex || null,
@@ -350,6 +355,8 @@ export async function saveJovem(input: JovemInput): Promise<string> {
     notes: input.notes || null,
     status: input.status || 'Ativo',
   };
+  // só toca em `selado` quando o chamador passou (evita zerar ao salvar pelo YouthForm)
+  if (input.selado !== undefined) row.selado = input.selado;
   if (input.id) {
     const { error } = await supabase.from('jovens').update(row).eq('id', input.id);
     if (error) throw error;
@@ -407,6 +414,75 @@ export function useAuxiliares() {
   }, []);
   useFocusEffect(useCallback(() => void reload(), [reload]));
   return { auxiliares, loading, reload };
+}
+
+export interface AuxiliarDetail {
+  id: string;
+  name: string;
+  username: string;
+  role: 'cooperador' | 'auxiliar';
+  status: Status;
+  phone: string;
+  birth: string;
+  baptism: string;
+  presented: string;
+  photoUrl: string;
+  jovemId: string | null;
+}
+export function useAuxiliar(id: string | undefined) {
+  const [aux, setAux] = useState<AuxiliarDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const reload = useCallback(async () => {
+    if (!id) {
+      setAux(null);
+      setLoading(false);
+      return;
+    }
+    const { data } = await supabase
+      .from('auxiliares')
+      .select('id, name, username, role, status, phone, birth, baptism, presented, photo_url, jovem_id')
+      .eq('id', id)
+      .maybeSingle();
+    setAux(
+      data
+        ? {
+            id: data.id,
+            name: data.name,
+            username: data.username,
+            role: data.role,
+            status: data.status,
+            phone: data.phone ?? '',
+            birth: data.birth ?? '',
+            baptism: data.baptism ?? '',
+            presented: data.presented ?? '',
+            photoUrl: data.photo_url ?? '',
+            jovemId: data.jovem_id ?? null,
+          }
+        : null,
+    );
+    setLoading(false);
+  }, [id]);
+  useFocusEffect(useCallback(() => void reload(), [reload]));
+  return { aux, loading, reload };
+}
+
+/** Atualiza campos da CONTA de auxiliar. Só inclui `status` quando passado (e o
+ *  trigger guard só deixa admin alterar status). name/birth para o cooperador
+ *  (sem jovem); nos auxiliares vinculados o espelho de jovens já sincroniza. */
+export async function updateAuxiliar(
+  id: string,
+  fields: { name?: string; birth?: string; phone?: string; baptism?: string; presented?: string; status?: string },
+): Promise<void> {
+  const row: Record<string, unknown> = {};
+  if (fields.name !== undefined) row.name = fields.name;
+  if (fields.birth !== undefined) row.birth = fields.birth || null;
+  if (fields.phone !== undefined) row.phone = fields.phone || null;
+  if (fields.baptism !== undefined) row.baptism = fields.baptism || null;
+  if (fields.presented !== undefined) row.presented = fields.presented || null;
+  if (fields.status !== undefined) row.status = fields.status;
+  if (Object.keys(row).length === 0) return;
+  const { error } = await supabase.from('auxiliares').update(row).eq('id', id);
+  if (error) throw error;
 }
 
 /* --------------------------------------------------------------- Presenças */

@@ -30,7 +30,7 @@ export default function AuxList() {
         {list.map((a) => {
           const roleLabel = a.role === 'cooperador' ? 'Cooperador' : 'Auxiliar';
           return (
-          <CardRow key={a.id} accessibilityLabel={a.name + ', ' + roleLabel + ', ' + a.status}>
+          <CardRow key={a.id} accessibilityLabel={a.name + ', ' + roleLabel + ', ' + a.status} onPress={() => go('AuxForm', { id: a.id })}>
             <Avatar name={a.name} size={48} photoUrl={a.photoUrl} />
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
