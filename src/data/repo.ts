@@ -41,6 +41,8 @@ export interface Jovem {
   address: string;
   notes: string;
   photoUrl: string;
+  /** true quando esta ficha de pessoa também é uma conta de auxiliar (login). */
+  linkedAux: boolean;
 }
 
 export interface Auxiliar {
@@ -122,6 +124,7 @@ function mapJovem(j: any): Jovem {
     address: j.address ?? '',
     notes: j.notes ?? '',
     photoUrl: j.photo_url ?? '',
+    linkedAux: false,
   };
 }
 
@@ -129,8 +132,16 @@ export function useJovens() {
   const [jovens, setJovens] = useState<Jovem[]>([]);
   const [loading, setLoading] = useState(true);
   const reload = useCallback(async () => {
-    const { data } = await supabase.from('jovens').select(JOVEM_SELECT).order('name');
-    setJovens((data ?? []).map(mapJovem));
+    // 2ª busca: quais fichas de jovem são também contas de auxiliar (vínculo),
+    // para marcar "Auxiliar" na lista sem inflar/embed frágil de PostgREST.
+    const [jres, ares] = await Promise.all([
+      supabase.from('jovens').select(JOVEM_SELECT).order('name'),
+      supabase.from('auxiliares').select('jovem_id').not('jovem_id', 'is', null),
+    ]);
+    const auxJovemIds = new Set((ares.data ?? []).map((a: any) => a.jovem_id));
+    setJovens(
+      (jres.data ?? []).map((j: any) => ({ ...mapJovem(j), linkedAux: auxJovemIds.has(j.id) })),
+    );
     setLoading(false);
   }, []);
   useFocusEffect(useCallback(() => void reload(), [reload]));
@@ -200,7 +211,13 @@ export async function saveJovem(input: JovemInput): Promise<string> {
 
 export async function deleteJovem(id: string): Promise<void> {
   const { error } = await supabase.from('jovens').delete().eq('id', id);
-  if (error) throw error;
+  if (error) {
+    // FK restrict: a ficha é o login de um auxiliar — a conta precisa sair antes
+    if (error.code === '23503' || /foreign key|auxiliares/i.test(error.message)) {
+      throw new Error('JOVEM_E_AUXILIAR');
+    }
+    throw error;
+  }
 }
 
 /** Grava a URL pública da foto numa linha de jovens/auxiliares. */
@@ -507,9 +524,12 @@ export function useBirthdays() {
   const [birthdays, setBirthdays] = useState<Birthday[]>([]);
   const [loading, setLoading] = useState(true);
   const reload = useCallback(async () => {
+    // Auxiliares vinculados já são jovens (têm ficha em `jovens`), então só
+    // somamos os auxiliares SEM vínculo (ex.: o cooperador) — evita aniversário
+    // duplicado. Cada pessoa aparece uma vez.
     const [jr, ar] = await Promise.all([
       supabase.from('jovens').select('name, birth, photo_url'),
-      supabase.from('auxiliares').select('name, birth, photo_url'),
+      supabase.from('auxiliares').select('name, birth, photo_url').is('jovem_id', null),
     ]);
     const out: Birthday[] = [];
     (jr.data ?? []).forEach((r: any) => {
@@ -599,12 +619,10 @@ export function useInviteCode() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(true);
   const reload = useCallback(async () => {
-    const { data } = await supabase
-      .from('congregacao')
-      .select('aux_invite_code')
-      .eq('id', 1)
-      .maybeSingle();
-    setCode(data?.aux_invite_code ?? '');
+    // RPC admin-only: a coluna aux_invite_code não é mais legível direto (evita
+    // que um auxiliar comum leia e revaze o código).
+    const { data } = await supabase.rpc('get_aux_invite_code');
+    setCode((data as string | null) ?? '');
     setLoading(false);
   }, []);
   useFocusEffect(useCallback(() => void reload(), [reload]));

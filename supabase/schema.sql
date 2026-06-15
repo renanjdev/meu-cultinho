@@ -83,6 +83,16 @@ create table if not exists public.jovens (
 alter table public.jovens add column if not exists batizado boolean not null default false;
 alter table public.jovens add column if not exists batismo  text;
 
+-- Vínculo auxiliar(conta) -> jovem(pessoa): o auxiliar é um jovem com login.
+-- 1:1 (um jovem mapeia no máximo uma conta). Definido aqui porque referencia
+-- `jovens`, criada acima. Ver supabase/migrations/2026-06-15-aux-jovem-link.sql.
+-- ON DELETE RESTRICT: não dá pra apagar a ficha de jovem enquanto ela for o
+-- login de um auxiliar (a conta tem que ser removida antes).
+alter table public.auxiliares
+  add column if not exists jovem_id uuid references public.jovens(id) on delete restrict;
+create unique index if not exists auxiliares_jovem_id_key
+  on public.auxiliares(jovem_id) where jovem_id is not null;
+
 -- Presenças (uma marcação por jovem por data)
 create table if not exists public.presencas (
   id          uuid primary key default gen_random_uuid(),
@@ -122,7 +132,9 @@ create or replace function public.guard_aux_privileged()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
   if not public.is_admin()
-     and (new.role is distinct from old.role or new.status is distinct from old.status) then
+     and (new.role is distinct from old.role
+          or new.status is distinct from old.status
+          or new.jovem_id is distinct from old.jovem_id) then
     raise exception 'SEM_PERMISSAO';
   end if;
   return new;
@@ -130,6 +142,25 @@ end; $$;
 drop trigger if exists t_aux_guard on public.auxiliares;
 create trigger t_aux_guard before update on public.auxiliares
   for each row execute function public.guard_aux_privileged();
+
+-- Espelho jovens -> auxiliares: jovens é a fonte da verdade de nome/nascimento
+-- da pessoa; ao editar a ficha de jovem vinculada, propaga p/ a conta (nome de
+-- login, calendário do cooperador). Só nome/nascimento → passa pelo guard, sem
+-- recursão. Definido após `jovens` existir (ver migração 2026-06-15).
+create or replace function public.mirror_jovem_to_aux()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if new.name is distinct from old.name or new.birth is distinct from old.birth then
+    update public.auxiliares
+       set name = new.name, birth = new.birth
+     where jovem_id = new.id
+       and (name is distinct from new.name or birth is distinct from new.birth);
+  end if;
+  return new;
+end; $$;
+drop trigger if exists t_jov_mirror_aux on public.jovens;
+create trigger t_jov_mirror_aux after update on public.jovens
+  for each row execute function public.mirror_jovem_to_aux();
 
 -- ============================================================================
 -- RLS — app interno (somente staff autenticado). Leitura total p/ autenticados;

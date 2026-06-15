@@ -8,7 +8,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useSession } from '../state/session';
 import { useNav } from '../navigation/useNav';
 import { Button, Field, LogoMark, Screen, Txt } from '../components/ui';
-import { IconCheck, IconLock, IconUser } from '../components/Icons';
+import { IconCalendar, IconCheck, IconLock, IconUser } from '../components/Icons';
+import { validateDateBR } from '../data/date';
 
 /** Lê o código do link (?aux=CODIGO) no navegador. */
 function readInviteFromUrl(): string {
@@ -27,6 +28,7 @@ export default function AuxSignup() {
   const [code, setCode] = useState(readInviteFromUrl());
   const [name, setName] = useState('');
   const [user, setUser] = useState('');
+  const [birth, setBirth] = useState('');
   const [pass, setPass] = useState('');
   const [pass2, setPass2] = useState('');
   const [busy, setBusy] = useState(false);
@@ -37,9 +39,12 @@ export default function AuxSignup() {
   const nameOk = name.trim().length >= 2;
   // precisa começar com letra/número (evita usuários só com símbolos → e-mail interno inválido)
   const userOk = /^[a-z0-9][a-z0-9._-]{2,}$/i.test(user.trim());
+  // nascimento: data válida, não no futuro (vira o aniversário no calendário)
+  const birthErr = birth.trim() ? validateDateBR(birth) : 'Informe seu nascimento';
+  const birthOk = !birthErr;
   const passOk = pass.length >= 6;
   const matchOk = pass === pass2;
-  const canSubmit = codeOk && nameOk && userOk && passOk && matchOk;
+  const canSubmit = codeOk && nameOk && userOk && birthOk && passOk && matchOk;
 
   const criar = async () => {
     setTried(true);
@@ -47,7 +52,7 @@ export default function AuxSignup() {
     if (!canSubmit) return;
     setBusy(true);
     try {
-      await signUpAuxiliar(code.trim(), name.trim(), user.trim().toLowerCase(), pass);
+      await signUpAuxiliar(code.trim(), name.trim(), user.trim().toLowerCase(), pass, birth.trim());
       // sucesso: o Gate troca para o app (Home do auxiliar) automaticamente
     } catch (e: unknown) {
       const msg = String((e as { message?: string })?.message ?? e ?? '');
@@ -110,6 +115,16 @@ export default function AuxSignup() {
             icon={<IconUser size={19} />}
             autoComplete="username"
             error={tried && !userOk ? 'Mínimo 3 caracteres (letras e números)' : undefined}
+          />
+          <Field
+            label="Data de nascimento"
+            required
+            dateMask
+            value={birth}
+            onChangeText={setBirth}
+            placeholder="dd/mm/aaaa"
+            icon={<IconCalendar size={19} />}
+            error={(tried || birth.length >= 10) && !birthOk ? birthErr : undefined}
           />
           <Field
             label="Senha"
