@@ -7,6 +7,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useNav } from '../navigation/useNav';
 import { useToast } from '../components/Toast';
 import { useJovem, useJovemStats, deleteJovem } from '../data/repo';
+import { whatsappLink } from '../data/phone';
 import { ageFrom } from '../data/age';
 import type { RootStackParamList } from '../navigation/types';
 import {
@@ -138,11 +139,14 @@ export default function YouthDetail() {
               label="WhatsApp"
               value={j.phone}
               action={
-                j.phone.replace(/\D/g, '') ? (
+                whatsappLink(j.phone) ? (
                   <Button
                     sm
                     variant="secondary"
-                    onPress={() => Linking.openURL('https://wa.me/55' + j.phone.replace(/\D/g, ''))}>
+                    onPress={() => {
+                      const url = whatsappLink(j.phone);
+                      if (url) Linking.openURL(url);
+                    }}>
                     Chamar
                   </Button>
                 ) : undefined
