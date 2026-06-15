@@ -115,6 +115,22 @@ returns boolean language sql stable security definer set search_path = public as
   select exists (select 1 from public.auxiliares a where a.id = auth.uid() and a.role = 'cooperador');
 $$;
 
+-- Trava de escalada de privilégio: só admin muda role/status (o WITH CHECK do
+-- RLS não restringe colunas, então o próprio usuário poderia se promover sem
+-- este trigger).
+create or replace function public.guard_aux_privileged()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin()
+     and (new.role is distinct from old.role or new.status is distinct from old.status) then
+    raise exception 'SEM_PERMISSAO';
+  end if;
+  return new;
+end; $$;
+drop trigger if exists t_aux_guard on public.auxiliares;
+create trigger t_aux_guard before update on public.auxiliares
+  for each row execute function public.guard_aux_privileged();
+
 -- ============================================================================
 -- RLS — app interno (somente staff autenticado). Leitura total p/ autenticados;
 -- jovens/grupos/presenças geridos por admin E auxiliar (conforme a spec);

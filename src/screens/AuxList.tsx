@@ -57,7 +57,7 @@ export default function AuxList() {
         })}
       </ScreenScroll>
 
-      <Fab label="Novo Auxiliar" onPress={() => go('AuxForm')} />
+      <Fab label="Convidar auxiliar" onPress={() => go('InviteAux')} />
     </Screen>
   );
 }

@@ -33,6 +33,13 @@ interface SessionContextValue {
   signOut: () => Promise<void>;
   /** Recarrega o perfil do usuário logado (ex.: após trocar a foto). */
   refresh: () => Promise<void>;
+  /** Autocadastro de auxiliar via link: valida o código, cria conta + perfil. */
+  signUpAuxiliar: (
+    code: string,
+    name: string,
+    username: string,
+    password: string,
+  ) => Promise<void>;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -115,8 +122,51 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const signUpAuxiliar = useCallback(
+    async (code: string, name: string, username: string, password: string) => {
+      const email = usernameToEmail(username);
+      // 1) valida o código ANTES de criar a conta (evita conta órfã com código errado)
+      const { data: ok, error: cErr } = await supabase.rpc('check_aux_invite', { p_code: code });
+      if (cErr) throw new Error(cErr.message);
+      if (!ok) throw new Error('CODIGO_INVALIDO');
+      // 2) cria a conta de auth. Se o usuário já existe (ex.: tentativa anterior
+      //    que falhou no perfil), entra com a mesma senha para retomar o cadastro;
+      //    se a senha não bate, é de outra pessoa → usuário em uso.
+      const { error: sErr } = await supabase.auth.signUp({ email, password });
+      if (sErr) {
+        if (/already registered|already exists|already_exists/i.test(sErr.message)) {
+          const { error: inErr } = await supabase.auth.signInWithPassword({ email, password });
+          if (inErr) throw new Error('USUARIO_EXISTE');
+        } else {
+          throw sErr;
+        }
+      }
+      // 3) cria o perfil no servidor (revalida o código, role fixo 'auxiliar';
+      //    idempotente: se já existir o perfil, apenas retorna)
+      const { error: rErr } = await supabase.rpc('redeem_aux_invite', {
+        p_code: code,
+        p_name: name,
+        p_username: username,
+      });
+      if (rErr) {
+        await supabase.auth.signOut(); // não deixar conta logada sem perfil
+        throw new Error(rErr.message);
+      }
+      // 4) carrega o perfil e entra. Deixa o erro propagar (ao contrário do
+      //    refresh, que engole) para a tela reagir em vez de travar no spinner.
+      const { data: s } = await supabase.auth.getSession();
+      const uid = s.session?.user.id;
+      if (!uid) throw new Error('SESSAO_PERDIDA');
+      const prof = await loadProfile(uid);
+      if (!prof) throw new Error('PERFIL_NAO_CARREGOU');
+      setSession(prof);
+    },
+    [],
+  );
+
   return (
-    <SessionContext.Provider value={{ session, loading, signIn, signOut, refresh }}>
+    <SessionContext.Provider
+      value={{ session, loading, signIn, signOut, refresh, signUpAuxiliar }}>
       {children}
     </SessionContext.Provider>
   );
