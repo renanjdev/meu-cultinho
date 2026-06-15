@@ -59,8 +59,11 @@ export default function Attendance() {
   const roster = jovens.filter((j) => j.grupoId === grp && j.status === 'Ativo');
   const { marks, setMarks, reload } = useMarks(dateISO, grp || undefined);
 
-  const present = Object.values(marks).filter((v) => v === 'present').length;
-  const absent = Object.values(marks).filter((v) => v === 'absent').length;
+  // contar só sobre o roster atual: evita "pendentes" negativo quando uma marca
+  // antiga é de alguém que saiu do grupo/foi inativado, e mantém os pills
+  // coerentes com a lista exibida.
+  const present = roster.filter((j) => marks[j.id] === 'present').length;
+  const absent = roster.filter((j) => marks[j.id] === 'absent').length;
   const pending = roster.length - present - absent;
 
   // Toggle + persist. Tapping the active mark again clears it (deletes the row).
@@ -75,7 +78,7 @@ export default function Attendance() {
     try {
       await setMark(dateISO, grp, id, next, session?.userId);
     } catch {
-      show('Erro ao salvar a presença');
+      show('Erro ao salvar a presença', 'error');
       void reload();
     }
   };
@@ -94,6 +97,9 @@ export default function Attendance() {
           <SumPill num={absent} label="Faltas" tone="absent" />
           <SumPill num={pending} label="Pendentes" tone="gold" />
         </View>
+        <Txt weight="semibold" size={12} color={t.inkSoft} style={{ textAlign: 'center' }}>
+          As marcações são salvas automaticamente.
+        </Txt>
       </View>
 
       {/* roster */}
@@ -123,12 +129,12 @@ export default function Attendance() {
                     {j.name}
                   </Txt>
                   <Txt weight="semibold" size={12.5} color={t.inkSoft}>
-                    {j.age} anos
+                    {j.hasAge ? `${j.age} anos` : 'Idade não informada'}
                   </Txt>
                 </View>
                 <IconButton
                   accessibilityLabel="Observação"
-                  onPress={() => show('Em breve')}
+                  onPress={() => show('Em breve', 'info')}
                   style={{ width: 44, height: 44, backgroundColor: t.surface2 }}>
                   <IconNote size={18} color={t.inkSoft} />
                 </IconButton>
@@ -156,11 +162,10 @@ export default function Attendance() {
           variant="primary"
           icon={<IconCheck size={19} />}
           onPress={() => {
-            show('Presenças salvas');
             if (back) back();
             else go('AdminHome');
           }}>
-          {pending > 0 ? `Salvar frequência · ${pending} pendente${pending > 1 ? 's' : ''}` : 'Salvar frequência'}
+          {pending > 0 ? `Concluir · ${pending} pendente${pending > 1 ? 's' : ''}` : 'Concluir'}
         </Button>
       </View>
     </Screen>

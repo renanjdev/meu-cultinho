@@ -10,6 +10,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -34,14 +35,19 @@ interface SessionContextValue {
   /** Recarrega o perfil do usuário logado (ex.: após trocar a foto). */
   refresh: () => Promise<void>;
   /** Autocadastro de auxiliar via link: valida o código, cria conta + perfil.
-   *  `birth` (dd/mm/aaaa) cria a ficha de jovem vinculada (auxiliar é jovem). */
-  signUpAuxiliar: (
-    code: string,
-    name: string,
-    username: string,
-    password: string,
-    birth: string,
-  ) => Promise<void>;
+   *  Dados da igreja (todos dd/mm/aaaa, exceto selado): `birth`/`batismo`/
+   *  `selado` vão na ficha de jovem vinculada; `presented` (apresentação ao
+   *  cargo) fica na conta de auxiliar. */
+  signUpAuxiliar: (args: {
+    code: string;
+    name: string;
+    username: string;
+    password: string;
+    birth: string;
+    batismo?: string;
+    selado?: boolean;
+    presented?: string;
+  }) => Promise<void>;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -66,6 +72,9 @@ async function loadProfile(userId: string): Promise<Session | null> {
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  // true enquanto signIn/signUp monta a sessão manualmente: faz o listener de
+  // auth ignorar applies concorrentes que zerariam a sessão recém-criada.
+  const manualAuthInFlight = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -91,6 +100,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         if (active) setLoading(false);
       });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+      // não sobrescrever a sessão que o fluxo manual (signIn/signUp) está montando
+      if (manualAuthInFlight.current) return;
       void apply(sess?.user.id);
     });
     return () => {
@@ -100,19 +111,24 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = useCallback(async (username: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: usernameToEmail(username),
-      password,
-    });
-    if (error) throw error;
-    // Auth ok — load the profile. No profile row = can't enter; surface it
-    // clearly instead of spinning forever.
-    const prof = await loadProfile(data.user.id);
-    if (!prof) {
-      await supabase.auth.signOut();
-      throw new Error('SEM_PERFIL');
+    manualAuthInFlight.current = true;
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: usernameToEmail(username),
+        password,
+      });
+      if (error) throw error;
+      // Auth ok — load the profile. No profile row = can't enter; surface it
+      // clearly instead of spinning forever.
+      const prof = await loadProfile(data.user.id);
+      if (!prof) {
+        await supabase.auth.signOut();
+        throw new Error('SEM_PERFIL');
+      }
+      setSession(prof);
+    } finally {
+      manualAuthInFlight.current = false;
     }
-    setSession(prof);
   }, []);
 
   const signOut = useCallback(async () => {
@@ -133,44 +149,80 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUpAuxiliar = useCallback(
-    async (code: string, name: string, username: string, password: string, birth: string) => {
+    async ({
+      code,
+      name,
+      username,
+      password,
+      birth,
+      batismo,
+      selado,
+      presented,
+    }: {
+      code: string;
+      name: string;
+      username: string;
+      password: string;
+      birth: string;
+      batismo?: string;
+      selado?: boolean;
+      presented?: string;
+    }) => {
       const email = usernameToEmail(username);
-      // 1) valida o código ANTES de criar a conta (evita conta órfã com código errado)
-      const { data: ok, error: cErr } = await supabase.rpc('check_aux_invite', { p_code: code });
-      if (cErr) throw new Error(cErr.message);
-      if (!ok) throw new Error('CODIGO_INVALIDO');
-      // 2) cria a conta de auth. Se o usuário já existe (ex.: tentativa anterior
-      //    que falhou no perfil), entra com a mesma senha para retomar o cadastro;
-      //    se a senha não bate, é de outra pessoa → usuário em uso.
-      const { error: sErr } = await supabase.auth.signUp({ email, password });
-      if (sErr) {
-        if (/already registered|already exists|already_exists/i.test(sErr.message)) {
+      manualAuthInFlight.current = true;
+      try {
+        // 1) valida o código ANTES de criar a conta (evita conta órfã com código errado)
+        const { data: ok, error: cErr } = await supabase.rpc('check_aux_invite', { p_code: code });
+        if (cErr) throw new Error(cErr.message);
+        if (!ok) throw new Error('CODIGO_INVALIDO');
+        // 2) cria a conta. Com "Confirm email" OFF, o GoTrue NÃO devolve erro
+        //    "already registered" (anti-enumeração): retorna usuário SEM sessão.
+        //    Tratamos os dois sinais (erro explícito OU sessão ausente) e, nesse
+        //    caso, tentamos entrar com a mesma senha (retoma conta órfã; se a
+        //    senha não bate, é de outra pessoa → usuário em uso).
+        const { data: su, error: sErr } = await supabase.auth.signUp({ email, password });
+        if (sErr) {
+          if (/already registered|already exists|already_exists/i.test(sErr.message)) {
+            const { error: inErr } = await supabase.auth.signInWithPassword({ email, password });
+            if (inErr) throw new Error('USUARIO_EXISTE');
+          } else {
+            throw sErr;
+          }
+        } else if (!su.session) {
           const { error: inErr } = await supabase.auth.signInWithPassword({ email, password });
           if (inErr) throw new Error('USUARIO_EXISTE');
-        } else {
-          throw sErr;
         }
+        // garante sessão ANTES de resgatar o convite (a RPC exige auth.uid())
+        const { data: pre } = await supabase.auth.getSession();
+        const uid = pre.session?.user.id;
+        if (!uid) throw new Error('USUARIO_EXISTE');
+        // 3) cria/resgata o perfil (revalida o código, role fixo 'auxiliar';
+        //    idempotente: se já existir o perfil, apenas retorna)
+        const { error: rErr } = await supabase.rpc('redeem_aux_invite', {
+          p_code: code,
+          p_name: name,
+          p_username: username,
+          p_birth: birth,
+          p_batismo: batismo ?? null,
+          p_selado: selado ?? false,
+          p_presented: presented ?? null,
+        });
+        if (rErr) throw new Error(rErr.message);
+        // 4) carrega o perfil e entra
+        const prof = await loadProfile(uid);
+        if (!prof) throw new Error('PERFIL_NAO_CARREGOU');
+        setSession(prof);
+      } catch (e) {
+        // qualquer falha após o signUp: não deixar conta logada sem perfil
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          /* ignora erro de signOut */
+        }
+        throw e;
+      } finally {
+        manualAuthInFlight.current = false;
       }
-      // 3) cria o perfil no servidor (revalida o código, role fixo 'auxiliar';
-      //    idempotente: se já existir o perfil, apenas retorna)
-      const { error: rErr } = await supabase.rpc('redeem_aux_invite', {
-        p_code: code,
-        p_name: name,
-        p_username: username,
-        p_birth: birth,
-      });
-      if (rErr) {
-        await supabase.auth.signOut(); // não deixar conta logada sem perfil
-        throw new Error(rErr.message);
-      }
-      // 4) carrega o perfil e entra. Deixa o erro propagar (ao contrário do
-      //    refresh, que engole) para a tela reagir em vez de travar no spinner.
-      const { data: s } = await supabase.auth.getSession();
-      const uid = s.session?.user.id;
-      if (!uid) throw new Error('SESSAO_PERDIDA');
-      const prof = await loadProfile(uid);
-      if (!prof) throw new Error('PERFIL_NAO_CARREGOU');
-      setSession(prof);
     },
     [],
   );

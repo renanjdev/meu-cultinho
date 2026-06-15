@@ -70,3 +70,18 @@ if (html.includes(MARKER)) {
 }
 
 writeFileSync(htmlPath, html);
+
+// 3) carimba a versão no sw.js com o hash do bundle. Sem isso o sw.js fica
+// byte-idêntico entre deploys → o navegador nunca dispara 'updatefound', o
+// banner "Nova versão" nunca aparece e o cache antigo nunca é despejado.
+const swPath = join(dist, 'sw.js');
+if (existsSync(swPath)) {
+  const stamp = (html.match(/index-([a-f0-9]+)\.js/) || [])[1] || 'build';
+  const swSrc = readFileSync(swPath, 'utf8');
+  if (swSrc.includes("'cultinho-v2'")) {
+    writeFileSync(swPath, swSrc.replace("'cultinho-v2'", `'cultinho-${stamp}'`));
+    console.log(`[pwa] sw.js carimbado: cultinho-${stamp}`);
+  } else {
+    console.log('[pwa] aviso: literal cache do sw.js não encontrado p/ carimbar.');
+  }
+}

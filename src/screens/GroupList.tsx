@@ -50,10 +50,10 @@ export default function GroupList() {
               <MiniStat icon={<IconUsers size={15} />} label={`${g.count} jovens`} />
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-              <Button sm variant="secondary" style={{ flex: 1 }} onPress={() => go('GroupForm')}>
+              <Button sm variant="secondary" style={{ flex: 1 }} onPress={() => go('GroupForm', { id: g.id })}>
                 Editar
               </Button>
-              <Button sm variant="secondary" style={{ flex: 1 }} onPress={() => go('YouthList')}>
+              <Button sm variant="secondary" style={{ flex: 1 }} onPress={() => go('YouthList', { group: g.id })}>
                 Jovens
               </Button>
               <Button sm bg={t.primary} fg={t.onPrimary} style={{ flex: 1 }} onPress={() => go('Attendance', { group: g.id })}>

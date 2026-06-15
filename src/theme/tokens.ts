@@ -133,7 +133,9 @@ export const THEMES: Record<ThemeName, Theme> = {
     surface2: '#eeeef7',
     ink: '#2a2d3a',
     inkSoft: '#5a5f72',
-    inkFaint: '#9a9eb0',
+    // tom de "dica" (placeholders): mais claro que inkSoft mas ainda >=4.5:1 no
+    // branco (AA). Não usar sobre fundos tintados (use inkSoft lá).
+    inkFaint: '#717485',
     line: '#e7e7f1',
     scrim: 'rgba(20,28,40,0.42)',
     radiusCard: 26,

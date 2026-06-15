@@ -7,7 +7,7 @@ import { Platform, ScrollView, View } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useSession } from '../state/session';
 import { useNav } from '../navigation/useNav';
-import { Button, Field, LogoMark, Screen, Txt } from '../components/ui';
+import { Button, Field, FieldSection, LogoMark, Screen, Segmented, Txt } from '../components/ui';
 import { IconCalendar, IconCheck, IconLock, IconUser } from '../components/Icons';
 import { validateDateBR } from '../data/date';
 
@@ -29,6 +29,9 @@ export default function AuxSignup() {
   const [name, setName] = useState('');
   const [user, setUser] = useState('');
   const [birth, setBirth] = useState('');
+  const [batismo, setBatismo] = useState('');
+  const [selado, setSelado] = useState(false);
+  const [presented, setPresented] = useState('');
   const [pass, setPass] = useState('');
   const [pass2, setPass2] = useState('');
   const [busy, setBusy] = useState(false);
@@ -42,9 +45,13 @@ export default function AuxSignup() {
   // nascimento: data válida, não no futuro (vira o aniversário no calendário)
   const birthErr = birth.trim() ? validateDateBR(birth) : 'Informe seu nascimento';
   const birthOk = !birthErr;
+  // batismo e apresentação são opcionais; só validam quando preenchidos
+  const batismoErr = batismo.trim() ? validateDateBR(batismo) : '';
+  const presentedErr = presented.trim() ? validateDateBR(presented) : '';
   const passOk = pass.length >= 6;
   const matchOk = pass === pass2;
-  const canSubmit = codeOk && nameOk && userOk && birthOk && passOk && matchOk;
+  const canSubmit =
+    codeOk && nameOk && userOk && birthOk && !batismoErr && !presentedErr && passOk && matchOk;
 
   const criar = async () => {
     setTried(true);
@@ -52,7 +59,16 @@ export default function AuxSignup() {
     if (!canSubmit) return;
     setBusy(true);
     try {
-      await signUpAuxiliar(code.trim(), name.trim(), user.trim().toLowerCase(), pass, birth.trim());
+      await signUpAuxiliar({
+        code: code.trim(),
+        name: name.trim(),
+        username: user.trim().toLowerCase(),
+        password: pass,
+        birth: birth.trim(),
+        batismo: batismo.trim(),
+        selado,
+        presented: presented.trim(),
+      });
       // sucesso: o Gate troca para o app (Home do auxiliar) automaticamente
     } catch (e: unknown) {
       const msg = String((e as { message?: string })?.message ?? e ?? '');
@@ -64,7 +80,7 @@ export default function AuxSignup() {
             : msg.includes('USUARIO_INVALIDO')
               ? 'Usuário inválido. Use letras e números (ex: lucas.souza).'
               : msg.includes('PERFIL_NAO_CARREGOU') || msg.includes('SESSAO_PERDIDA')
-                ? 'Conta criada! Houve um erro ao entrar — atualize a página e faça login.'
+                ? 'Conta criada! Houve um erro ao entrar. Atualize a página e faça login.'
                 : msg.toLowerCase().includes('password')
                   ? 'Senha muito curta (mínimo 6 caracteres).'
                   : 'Não foi possível criar a conta. Tente de novo.',
@@ -90,14 +106,16 @@ export default function AuxSignup() {
         </View>
 
         <View style={{ gap: 12 }}>
+          <FieldSection>Convite</FieldSection>
           <Field
             label="Código de convite"
             required
             value={code}
             onChangeText={(v) => setCode(v.toUpperCase())}
-            placeholder="Ex: A1B2C3"
+            placeholder="Ex: 9F3A7C21"
             error={tried && !codeOk ? 'Informe o código' : undefined}
           />
+          <FieldSection icon={<IconUser size={16} />}>Seus dados</FieldSection>
           <Field
             label="Seu nome completo"
             required
@@ -114,7 +132,7 @@ export default function AuxSignup() {
             placeholder="ex: lucas.souza"
             icon={<IconUser size={19} />}
             autoComplete="username"
-            error={tried && !userOk ? 'Mínimo 3 caracteres (letras e números)' : undefined}
+            error={tried && !userOk ? 'Use 3+ caracteres, comece com letra ou número (pode usar . _ -)' : undefined}
           />
           <Field
             label="Data de nascimento"
@@ -126,6 +144,32 @@ export default function AuxSignup() {
             icon={<IconCalendar size={19} />}
             error={(tried || birth.length >= 10) && !birthOk ? birthErr : undefined}
           />
+          <FieldSection icon={<IconCalendar size={16} />}>Dados da igreja (opcional)</FieldSection>
+          <Field
+            label="Data de batismo"
+            dateMask
+            value={batismo}
+            onChangeText={setBatismo}
+            placeholder="dd/mm/aaaa (se já batizou)"
+            icon={<IconCalendar size={19} />}
+            error={(tried || batismo.length >= 10) && batismoErr ? batismoErr : undefined}
+          />
+          <Segmented
+            label="É selado com o Espírito Santo?"
+            value={selado ? 'Sim' : 'Não'}
+            options={['Sim', 'Não']}
+            onChange={(v) => setSelado(v === 'Sim')}
+          />
+          <Field
+            label="Apresentação ao cargo"
+            dateMask
+            value={presented}
+            onChangeText={setPresented}
+            placeholder="dd/mm/aaaa (quando foi apresentado)"
+            icon={<IconCalendar size={19} />}
+            error={(tried || presented.length >= 10) && presentedErr ? presentedErr : undefined}
+          />
+          <FieldSection icon={<IconLock size={16} />}>Acesso</FieldSection>
           <Field
             label="Senha"
             required
@@ -150,7 +194,7 @@ export default function AuxSignup() {
           />
 
           {erro ? (
-            <Txt weight="semibold" size={13} color={t.absent}>
+            <Txt weight="semibold" size={13} color={t.absentDeep}>
               {erro}
             </Txt>
           ) : null}

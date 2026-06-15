@@ -3,8 +3,9 @@
  *
  * Lets placeholder controls (notification bell, report filter, attendance note)
  * give honest feedback ("Em breve") instead of reading as dead buttons, and is
- * reusable for future confirmations. Wrap the app in <ToastProvider> and call
- * useToast().show('...') anywhere below it.
+ * reusable for confirmations and errors. Wrap the app in <ToastProvider> and call
+ * useToast().show('...', 'error') anywhere below it. Tone picks icon/color so a
+ * failure não aparece com o ícone de sucesso.
  */
 import React, {
   createContext,
@@ -18,10 +19,12 @@ import { Animated, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 import { Txt } from './ui';
-import { IconCheckCircle } from './Icons';
+import { IconAlert, IconCheckCircle, IconXCircle } from './Icons';
+
+export type ToastTone = 'success' | 'error' | 'info';
 
 interface ToastContextValue {
-  show: (message: string) => void;
+  show: (message: string, tone?: ToastTone) => void;
 }
 
 const ToastContext = createContext<ToastContextValue>({ show: () => {} });
@@ -34,12 +37,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const [message, setMessage] = useState<string | null>(null);
+  const [tone, setTone] = useState<ToastTone>('success');
   const opacity = useRef(new Animated.Value(0)).current;
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const show = useCallback(
-    (msg: string) => {
+    (msg: string, t2: ToastTone = 'success') => {
       setMessage(msg);
+      setTone(t2);
       Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: false }).start();
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(() => {
@@ -50,6 +55,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     },
     [opacity],
   );
+
+  // ícones têm contraste de sobra sobre o fundo escuro (t.ink) do toast
+  const Icon = tone === 'error' ? IconXCircle : tone === 'info' ? IconAlert : IconCheckCircle;
+  const iconColor = tone === 'error' ? t.absent : tone === 'info' ? t.gold : t.present;
 
   return (
     <ToastContext.Provider value={{ show }}>
@@ -72,6 +81,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: t.space.sm,
+                maxWidth: '92%',
                 backgroundColor: t.ink,
                 paddingVertical: t.space.md,
                 paddingHorizontal: t.space.lg,
@@ -79,8 +89,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               },
               t.shadowPop,
             ]}>
-            <IconCheckCircle size={18} color={t.present} />
-            <Txt weight="bold" size={13.5} color={t.onPrimary}>
+            <Icon size={18} color={iconColor} />
+            <Txt weight="bold" size={13.5} color={t.onPrimary} style={{ flexShrink: 1 }}>
               {message}
             </Txt>
           </View>

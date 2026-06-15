@@ -5,7 +5,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useSession } from '../state/session';
 import { useToast } from '../components/Toast';
 import { useNav } from '../navigation/useNav';
-import { useJovens, useGrupos, useAuxiliares } from '../data/repo';
+import { useJovens, useGrupos, useAuxiliares, useLastMeeting } from '../data/repo';
 import type { RouteName } from '../navigation/types';
 import {
   Avatar,
@@ -65,13 +65,16 @@ export default function AdminHome() {
   const { jovens } = useJovens();
   const { grupos } = useGrupos();
   const { auxiliares } = useAuxiliares();
+  const lastMeeting = useLastMeeting();
   const firstName = session?.name?.split(' ')[0] ?? 'Cooperador';
+  // só auxiliares (o cooperador também tem linha em `auxiliares`, mas não conta aqui)
+  const numAux = auxiliares.filter((a) => a.role === 'auxiliar').length;
 
   const SUMMARY: SummaryItem[] = [
     { num: jovens.filter((j) => j.status === 'Ativo').length, label: 'Jovens ativos', Icon: IconUsers, tone: 'primary' },
-    { num: auxiliares.length, label: 'Auxiliares', Icon: IconUser, tone: 'gold' },
+    { num: numAux, label: 'Auxiliares', Icon: IconUser, tone: 'gold' },
     { num: grupos.length, label: 'Grupos', Icon: IconLayers, tone: 'present' },
-    { num: '—', label: 'Última reunião', Icon: IconCheckCircle, tone: 'present' },
+    { num: lastMeeting || '—', label: 'Última reunião', Icon: IconCheckCircle, tone: 'present' },
   ];
 
   return (
@@ -97,7 +100,7 @@ export default function AdminHome() {
             Resumo geral do Meu Cultinho
           </Txt>
         </View>
-        <IconButton soft accessibilityLabel="Notificações" onPress={() => show('Em breve')}>
+        <IconButton soft accessibilityLabel="Notificações" onPress={() => show('Em breve', 'info')}>
           <IconBell size={21} color={t.primary} />
         </IconButton>
       </View>
@@ -151,7 +154,7 @@ export default function AdminHome() {
         </View>
 
         {/* groups today */}
-        <SectionLabel action={<Link onPress={() => go('GroupList')}>Ver todos</Link>}>Grupos de hoje</SectionLabel>
+        <SectionLabel action={<Link onPress={() => go('GroupList')}>Ver todos</Link>}>Grupos</SectionLabel>
         <View style={{ gap: 12 }}>
           {grupos.slice(0, 3).map((g) => (
             <CardRow key={g.id} onPress={() => go('Attendance', { group: g.id })}>

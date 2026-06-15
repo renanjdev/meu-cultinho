@@ -16,7 +16,7 @@ export default function AuxList() {
 
   return (
     <Screen>
-      <AppBar title="Auxiliares" sub={`${auxiliares.length} cadastrados`} onBack={back} />
+      <AppBar title="Auxiliares" sub={`${auxiliares.length} na equipe`} onBack={back} />
       <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, backgroundColor: t.surface, borderBottomWidth: 1, borderBottomColor: t.line }}>
         <SearchBar value={q} onChange={setQ} placeholder="Buscar auxiliar..." />
       </View>
@@ -30,7 +30,7 @@ export default function AuxList() {
         {list.map((a) => {
           const roleLabel = a.role === 'cooperador' ? 'Cooperador' : 'Auxiliar';
           return (
-          <CardRow key={a.id} accessibilityLabel={a.name + ', ' + roleLabel + ', ' + a.status} onPress={() => go('AuxForm')}>
+          <CardRow key={a.id} accessibilityLabel={a.name + ', ' + roleLabel + ', ' + a.status}>
             <Avatar name={a.name} size={48} photoUrl={a.photoUrl} />
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
