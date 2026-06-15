@@ -4,6 +4,20 @@
  * JS puro (independente do bundle React), injetado no index.html pelo pós-build.
  */
 (function () {
+  // Captura cedo o evento de instalação do PWA. O Chrome/Android dispara o
+  // `beforeinstallprompt` antes do bundle React montar, então guardamos o evento
+  // num global; a tela InstallGate lê window.__pwaInstall.prompt e avisa via
+  // 'pwa-installable'. (Fica fora do early-return do SW: é independente dele.)
+  window.__pwaInstall = window.__pwaInstall || { prompt: null };
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    window.__pwaInstall.prompt = e;
+    window.dispatchEvent(new Event('pwa-installable'));
+  });
+  window.addEventListener('appinstalled', function () {
+    window.__pwaInstall.prompt = null;
+  });
+
   if (!('serviceWorker' in navigator)) return;
 
   function showBanner(onUpdate) {

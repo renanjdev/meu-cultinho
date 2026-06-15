@@ -79,7 +79,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       }
     };
-    supabase.auth.getSession().then(({ data }) => apply(data.session?.user.id));
+    // .catch garante sair do loading: se o getSession rejeitar (ex.: acesso ao
+    // storage bloqueado em alguns webviews), o app vai pro login em vez de
+    // travar pra sempre na BootScreen.
+    supabase.auth
+      .getSession()
+      .then(({ data }) => apply(data.session?.user.id))
+      .catch(() => {
+        if (active) setLoading(false);
+      });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
       void apply(sess?.user.id);
     });
