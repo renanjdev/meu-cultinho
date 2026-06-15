@@ -158,7 +158,10 @@ export default function Settings() {
               <Chip tone={isAux ? 'primary' : 'gold'}>{roleLabel}</Chip>
             </View>
           </View>
-          <IconButton soft onPress={() => show('Em breve', 'info')} accessibilityLabel="Editar perfil">
+          <IconButton
+            soft
+            onPress={() => session && go('AuxForm', { id: session.userId })}
+            accessibilityLabel="Editar perfil">
             <IconEdit size={18} color={t.primary} />
           </IconButton>
         </Card>
