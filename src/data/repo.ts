@@ -592,3 +592,32 @@ export async function deleteEvento(id: string): Promise<void> {
   const { error } = await supabase.from('eventos').delete().eq('id', id);
   if (error) throw error;
 }
+
+/* --------------------------------------------------- Convite de auxiliares */
+/** Código de convite atual (lido da config; só o cooperador usa a tela). */
+export function useInviteCode() {
+  const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(true);
+  const reload = useCallback(async () => {
+    const { data } = await supabase
+      .from('congregacao')
+      .select('aux_invite_code')
+      .eq('id', 1)
+      .maybeSingle();
+    setCode(data?.aux_invite_code ?? '');
+    setLoading(false);
+  }, []);
+  useFocusEffect(useCallback(() => void reload(), [reload]));
+  return { code, loading, reload };
+}
+
+/** Gera um novo código (6 chars legíveis, sem 0/O/1/I) e grava na config. */
+export async function regenerateInviteCode(): Promise<string> {
+  const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let c = '';
+  // 8 chars de um alfabeto de 31 ≈ 8.5e11 combinações (inviável de adivinhar)
+  for (let i = 0; i < 8; i++) c += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+  const { error } = await supabase.from('congregacao').update({ aux_invite_code: c }).eq('id', 1);
+  if (error) throw error;
+  return c;
+}

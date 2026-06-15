@@ -10,6 +10,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 export type RootStackParamList = {
   Splash: undefined;
   Login: undefined;
+  AuxSignup: undefined;
   AdminHome: undefined;
   AuxHome: undefined;
   YouthList: undefined;
@@ -17,6 +18,7 @@ export type RootStackParamList = {
   YouthDetail: { id: string };
   AuxList: undefined;
   AuxForm: undefined;
+  InviteAux: undefined;
   GroupList: undefined;
   GroupForm: undefined;
   Attendance: { group?: string } | undefined;

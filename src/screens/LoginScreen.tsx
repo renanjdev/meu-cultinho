@@ -4,6 +4,7 @@ import { ScrollView, View } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useSession } from '../state/session';
 import { useToast } from '../components/Toast';
+import { useNav } from '../navigation/useNav';
 import { Button, Field, Link, LogoMark, Screen, Txt } from '../components/ui';
 import { IconLock, IconUser } from '../components/Icons';
 
@@ -11,6 +12,7 @@ export default function LoginScreen() {
   const t = useTheme();
   const { signIn } = useSession();
   const { show } = useToast();
+  const { go } = useNav();
   const [user, setUser] = useState('renan');
   const [pass, setPass] = useState('');
   const [erro, setErro] = useState('');
@@ -81,6 +83,9 @@ export default function LoginScreen() {
           <Button variant="primary" loading={busy} onPress={entrar}>
             Entrar
           </Button>
+          <View style={{ alignItems: 'center' }}>
+            <Link onPress={() => go('AuxSignup')}>Sou auxiliar — criar conta</Link>
+          </View>
         </View>
 
         <View style={{ marginTop: 32, alignItems: 'center' }}>

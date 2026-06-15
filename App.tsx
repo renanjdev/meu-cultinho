@@ -25,6 +25,7 @@ import type { RootStackParamList } from './src/navigation/types';
 
 import SplashScreen from './src/screens/SplashScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import AuxSignup from './src/screens/AuxSignup';
 import AdminHome from './src/screens/AdminHome';
 import AuxHome from './src/screens/AuxHome';
 import YouthList from './src/screens/YouthList';
@@ -39,6 +40,7 @@ import HistoryScreen from './src/screens/HistoryScreen';
 import Reports from './src/screens/Reports';
 import CalendarScreen from './src/screens/CalendarScreen';
 import EventForm from './src/screens/EventForm';
+import InviteAux from './src/screens/InviteAux';
 import Settings from './src/screens/Settings';
 
 // Anel de foco de teclado (web). `:focus-visible` só dispara na navegação por
@@ -56,6 +58,12 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
     document.head.appendChild(el);
   }
 }
+
+// Link de convite: /?aux=CODIGO abre direto no autocadastro de auxiliar.
+const HAS_INVITE =
+  Platform.OS === 'web' &&
+  typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).has('aux');
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -89,6 +97,7 @@ function appScreens() {
       <Stack.Screen name="YouthDetail" component={YouthDetail} />
       <Stack.Screen name="AuxList" component={AuxList} />
       <Stack.Screen name="AuxForm" component={AuxForm} />
+      <Stack.Screen name="InviteAux" component={InviteAux} />
       <Stack.Screen name="GroupList" component={GroupList} />
       <Stack.Screen name="GroupForm" component={GroupForm} />
       <Stack.Screen name="Attendance" component={Attendance} />
@@ -108,10 +117,11 @@ function AuthNavigator() {
   return (
     <NavigationContainer theme={navTheme}>
       <Stack.Navigator
-        initialRouteName="Splash"
+        initialRouteName={HAS_INVITE ? 'AuxSignup' : 'Splash'}
         screenOptions={{ headerShown: false, animation: 'slide_from_right', contentStyle: { backgroundColor: t.bg } }}>
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="AuxSignup" component={AuxSignup} />
       </Stack.Navigator>
     </NavigationContainer>
   );
