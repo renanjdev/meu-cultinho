@@ -10,6 +10,7 @@ import {
   Avatar,
   BottomNav,
   CardRow,
+  Chip,
   Fab,
   FilterChips,
   Screen,
@@ -94,6 +95,7 @@ export default function YouthList() {
               </Txt>
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
                 <StatusChip kind={j.status} />
+                {j.linkedAux ? <Chip tone="gold">Auxiliar</Chip> : null}
               </View>
             </View>
             <IconChevR size={20} color={t.ink} opacity={0.4} />

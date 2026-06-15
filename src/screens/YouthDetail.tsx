@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRoute, type RouteProp } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useNav } from '../navigation/useNav';
+import { useToast } from '../components/Toast';
 import { useJovem, deleteJovem } from '../data/repo';
 import { ageFrom } from '../data/age';
 import type { RootStackParamList } from '../navigation/types';
@@ -38,6 +39,7 @@ import {
 export default function YouthDetail() {
   const t = useTheme();
   const { go, back } = useNav();
+  const { show } = useToast();
   const route = useRoute<RouteProp<RootStackParamList, 'YouthDetail'>>();
   const { jovem: j } = useJovem(route.params?.id);
   const [confirm, setConfirm] = useState(false);
@@ -172,8 +174,17 @@ export default function YouthDetail() {
         onCancel={() => setConfirm(false)}
         onConfirm={async () => {
           setConfirm(false);
-          await deleteJovem(j.id);
-          go('YouthList');
+          try {
+            await deleteJovem(j.id);
+            go('YouthList');
+          } catch (e: unknown) {
+            const msg = String((e as { message?: string })?.message ?? '');
+            show(
+              msg.includes('JOVEM_E_AUXILIAR')
+                ? 'Esse jovem também é um auxiliar (tem login). Remova a conta de auxiliar antes de excluir.'
+                : 'Não foi possível excluir. Tente de novo.',
+            );
+          }
         }}
       />
     </Screen>
