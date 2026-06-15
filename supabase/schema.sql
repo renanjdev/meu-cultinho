@@ -82,6 +82,8 @@ create table if not exists public.jovens (
 -- Migração idempotente (bancos já criados antes das colunas de batismo)
 alter table public.jovens add column if not exists batizado boolean not null default false;
 alter table public.jovens add column if not exists batismo  text;
+-- "selado com o Espírito Santo" (distinto do batismo em água)
+alter table public.jovens add column if not exists selado boolean not null default false;
 
 -- Vínculo auxiliar(conta) -> jovem(pessoa): o auxiliar é um jovem com login.
 -- 1:1 (um jovem mapeia no máximo uma conta). Definido aqui porque referencia

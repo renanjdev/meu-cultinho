@@ -34,14 +34,19 @@ interface SessionContextValue {
   /** Recarrega o perfil do usuário logado (ex.: após trocar a foto). */
   refresh: () => Promise<void>;
   /** Autocadastro de auxiliar via link: valida o código, cria conta + perfil.
-   *  `birth` (dd/mm/aaaa) cria a ficha de jovem vinculada (auxiliar é jovem). */
-  signUpAuxiliar: (
-    code: string,
-    name: string,
-    username: string,
-    password: string,
-    birth: string,
-  ) => Promise<void>;
+   *  Dados da igreja (todos dd/mm/aaaa, exceto selado): `birth`/`batismo`/
+   *  `selado` vão na ficha de jovem vinculada; `presented` (apresentação ao
+   *  cargo) fica na conta de auxiliar. */
+  signUpAuxiliar: (args: {
+    code: string;
+    name: string;
+    username: string;
+    password: string;
+    birth: string;
+    batismo?: string;
+    selado?: boolean;
+    presented?: string;
+  }) => Promise<void>;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -133,7 +138,25 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUpAuxiliar = useCallback(
-    async (code: string, name: string, username: string, password: string, birth: string) => {
+    async ({
+      code,
+      name,
+      username,
+      password,
+      birth,
+      batismo,
+      selado,
+      presented,
+    }: {
+      code: string;
+      name: string;
+      username: string;
+      password: string;
+      birth: string;
+      batismo?: string;
+      selado?: boolean;
+      presented?: string;
+    }) => {
       const email = usernameToEmail(username);
       // 1) valida o código ANTES de criar a conta (evita conta órfã com código errado)
       const { data: ok, error: cErr } = await supabase.rpc('check_aux_invite', { p_code: code });
@@ -158,6 +181,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         p_name: name,
         p_username: username,
         p_birth: birth,
+        p_batismo: batismo ?? null,
+        p_selado: selado ?? false,
+        p_presented: presented ?? null,
       });
       if (rErr) {
         await supabase.auth.signOut(); // não deixar conta logada sem perfil
