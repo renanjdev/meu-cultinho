@@ -1,10 +1,12 @@
 /** 5. Lista de Jovens — search + group/status filters, role-aware nav. */
 import React, { useState } from 'react';
 import { View } from 'react-native';
+import { useRoute, type RouteProp } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useSession } from '../state/session';
 import { useNav } from '../navigation/useNav';
 import { useJovens, useGrupos } from '../data/repo';
+import type { RootStackParamList } from '../navigation/types';
 import {
   AppBar,
   Avatar,
@@ -34,10 +36,12 @@ export default function YouthList() {
   const { session } = useSession();
   const isAux = session?.role === 'auxiliar';
   const { go, back } = useNav();
+  const route = useRoute<RouteProp<RootStackParamList, 'YouthList'>>();
   const { jovens } = useJovens();
   const { grupos } = useGrupos();
   const [q, setQ] = useState('');
-  const [grp, setGrp] = useState('all');
+  // pré-filtra pelo grupo quando aberto pelo card de um grupo ('all' = todos)
+  const [grp, setGrp] = useState(route.params?.group ?? 'all');
   const [status, setStatus] = useState('all');
 
   const groupOpts: Option[] = [

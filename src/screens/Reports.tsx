@@ -98,7 +98,7 @@ export default function Reports() {
         title="Relatórios"
         sub={sub}
         right={
-          <IconButton soft accessibilityLabel="Filtrar relatório" onPress={() => show('Em breve')}>
+          <IconButton soft accessibilityLabel="Filtrar relatório" onPress={() => show('Em breve', 'info')}>
             <IconFilter size={19} color={t.primary} />
           </IconButton>
         }
@@ -152,14 +152,14 @@ export default function Reports() {
               <RankCard
                 title="Mais frequentes"
                 tone="present"
-                icon={<IconStar size={16} color={t.present} />}
+                icon={<IconStar size={16} color={t.presentDeep} />}
                 rows={data!.topPresent}
                 empty="Sem dados ainda."
               />
               <RankCard
                 title="Mais ausentes"
                 tone="absent"
-                icon={<IconAlert size={16} color={t.absent} />}
+                icon={<IconAlert size={16} color={t.absentDeep} />}
                 rows={data!.topAbsent}
                 empty="Sem dados ainda."
               />

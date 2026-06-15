@@ -1,40 +1,82 @@
-/** 11. Cadastro de Grupo. */
-import React, { useState } from 'react';
+/** 11. Cadastro/edição de Grupo (persiste no Supabase). */
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
+import { useRoute, type RouteProp } from '@react-navigation/native';
 import { useNav } from '../navigation/useNav';
-import { AUX } from '../data/seed';
-import { AppBar, Button, Field, Screen, ScreenScroll, Segmented, SelectField, TextArea } from '../components/ui';
+import { useToast } from '../components/Toast';
+import { useGrupo, useAuxiliares, saveGrupo, type GroupIcon } from '../data/repo';
+import type { RootStackParamList } from '../navigation/types';
+import {
+  AppBar,
+  Button,
+  Field,
+  Screen,
+  ScreenScroll,
+  Segmented,
+  SelectField,
+  TextArea,
+} from '../components/ui';
 import { IconCheck } from '../components/Icons';
 
 interface GroupDraft {
-  name?: string;
-  desc?: string;
-  aux?: string;
-  status?: string;
+  name: string;
+  desc: string;
+  auxId: string;
+  status: string;
 }
 
 export default function GroupForm() {
   const { go, back } = useNav();
-  const [f, setF] = useState<GroupDraft>({ status: 'Ativo' });
+  const { show } = useToast();
+  const route = useRoute<RouteProp<RootStackParamList, 'GroupForm'>>();
+  const id = route.params?.id;
+  const { grupo } = useGrupo(id);
+  const { auxiliares } = useAuxiliares();
+  const [f, setF] = useState<GroupDraft>({ name: '', desc: '', auxId: '', status: 'Ativo' });
+  const [seeded, setSeeded] = useState(false);
   const [triedSave, setTriedSave] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  // semeia o form quando a ficha do grupo carrega (modo edição) — uma vez só
+  useEffect(() => {
+    if (grupo && !seeded) {
+      setF({ name: grupo.name, desc: grupo.description, auxId: grupo.auxId ?? '', status: grupo.status });
+      setSeeded(true);
+    }
+  }, [grupo, seeded]);
+
   const set = (k: keyof GroupDraft) => (v: string) => setF((s) => ({ ...s, [k]: v }));
+  const nameEmpty = !f.name.trim();
 
-  const nameEmpty = !(f.name ?? '').trim();
-
-  const onSave = () => {
+  const onSave = async () => {
     if (nameEmpty) {
       setTriedSave(true);
       return;
     }
-    go('GroupList');
+    setBusy(true);
+    try {
+      await saveGrupo({
+        id,
+        name: f.name,
+        description: f.desc,
+        auxId: f.auxId || null,
+        status: f.status,
+        icon: (grupo?.icon as GroupIcon) || undefined,
+      });
+      go('GroupList');
+    } catch {
+      show('Não foi possível salvar o grupo.', 'error');
+      setBusy(false);
+    }
   };
 
   return (
     <Screen>
-      <AppBar title="Cadastrar Grupo" onBack={back} />
+      <AppBar title={id ? 'Editar grupo' : 'Cadastrar grupo'} onBack={back} />
       <ScreenScroll contentStyle={{ paddingBottom: 24 }}>
         <Field
           label="Nome do grupo"
+          required
           placeholder="Ex: Moços"
           value={f.name}
           onChangeText={set('name')}
@@ -43,13 +85,13 @@ export default function GroupForm() {
         <TextArea label="Descrição" placeholder="Para quem é este grupo..." value={f.desc} onChangeText={set('desc')} />
         <SelectField
           label="Auxiliar responsável"
-          value={f.aux}
-          onChange={set('aux')}
-          options={[{ value: '', label: 'Selecione...' }, ...AUX.map((a) => ({ value: a.id, label: a.name }))]}
+          value={f.auxId}
+          onChange={set('auxId')}
+          options={[{ value: '', label: 'Sem responsável' }, ...auxiliares.map((a) => ({ value: a.id, label: a.name }))]}
         />
         <Segmented label="Status" value={f.status} options={['Ativo', 'Inativo']} onChange={set('status')} />
         <View style={{ height: 8 }} />
-        <Button variant="primary" icon={<IconCheck size={19} />} onPress={onSave}>
+        <Button variant="primary" icon={<IconCheck size={19} />} loading={busy} onPress={onSave}>
           Salvar grupo
         </Button>
         <Button variant="ghost" onPress={back}>

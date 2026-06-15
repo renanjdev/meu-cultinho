@@ -152,7 +152,13 @@ create trigger t_aux_guard before update on public.auxiliares
 create or replace function public.mirror_jovem_to_aux()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  if new.name is distinct from old.name or new.birth is distinct from old.birth then
+  -- só propaga se quem edita é admin ou o dono da própria conta vinculada
+  -- (não deixa um auxiliar reescrever o nome de login de outro)
+  if (new.name is distinct from old.name or new.birth is distinct from old.birth)
+     and (
+       public.is_admin()
+       or exists (select 1 from public.auxiliares a where a.jovem_id = new.id and a.id = auth.uid())
+     ) then
     update public.auxiliares
        set name = new.name, birth = new.birth
      where jovem_id = new.id

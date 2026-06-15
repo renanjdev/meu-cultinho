@@ -63,7 +63,7 @@ export default function EventForm() {
       if (back) back();
       else go('Calendar');
     } catch {
-      show('Erro ao salvar o evento');
+      show('Erro ao salvar o evento', 'error');
     } finally {
       setSaving(false);
     }
@@ -127,7 +127,7 @@ export default function EventForm() {
             if (back) back();
             else go('Calendar');
           } catch {
-            show('Erro ao excluir');
+            show('Erro ao excluir', 'error');
           }
         }}
       />

@@ -60,14 +60,17 @@ async function reduce(uri: string): Promise<string | null> {
 /** Envia um uri local pro bucket e devolve a URL pública. */
 export async function uploadPhoto(folder: PhotoFolder, id: string, uri: string): Promise<string> {
   const blob = await (await fetch(uri)).blob();
-  // caminho único (id + timestamp) evita cache do navegador e colisão
-  const path = `${folder}/${id}-${Date.now()}.jpg`;
+  // caminho ESTÁVEL por pessoa (sem timestamp) + upsert: a troca SOBRESCREVE a
+  // foto anterior em vez de acumular órfãos no bucket. O cache-busting vai na
+  // query string da URL pública.
+  const path = `${folder}/${id}.jpg`;
   const { error } = await supabase.storage.from(BUCKET).upload(path, blob, {
     contentType: blob.type || 'image/jpeg',
     upsert: true,
   });
   if (error) throw error;
-  return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+  const url = supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+  return `${url}?v=${Date.now()}`;
 }
 
 /** Seleciona + envia direto (para telas onde o id já existe). */

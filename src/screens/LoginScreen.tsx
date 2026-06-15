@@ -26,9 +26,13 @@ export default function LoginScreen() {
       // On success the auth gate swaps to the app navigator automatically.
       await signIn(user.trim(), pass);
     } catch (e) {
+      if (__DEV__ && e instanceof Error && e.message === 'SEM_PERFIL') {
+        console.warn('SEM_PERFIL: usuário autenticou mas não tem linha em auxiliares.');
+      }
+      // mensagem neutra (não revela se o auth passou nem cita o banco)
       setErro(
         e instanceof Error && e.message === 'SEM_PERFIL'
-          ? 'Login ok, mas não há perfil cadastrado para este usuário (rode o INSERT do cooperador no banco).'
+          ? 'Não foi possível entrar. Procure o cooperador.'
           : 'Usuário ou senha inválidos.',
       );
       setBusy(false);
@@ -72,10 +76,12 @@ export default function LoginScreen() {
             textContentType="password"
           />
           <View style={{ alignItems: 'flex-end' }}>
-            <Link onPress={() => show('Em breve')}>Esqueci minha senha</Link>
+            <Link onPress={() => show('Peça ao cooperador para redefinir sua senha.', 'info')}>
+              Esqueci minha senha
+            </Link>
           </View>
           {erro ? (
-            <Txt weight="semibold" size={13} color={t.absent}>
+            <Txt weight="semibold" size={13} color={t.absentDeep}>
               {erro}
             </Txt>
           ) : null}
@@ -84,7 +90,7 @@ export default function LoginScreen() {
             Entrar
           </Button>
           <View style={{ alignItems: 'center' }}>
-            <Link onPress={() => go('AuxSignup')}>Sou auxiliar — criar conta</Link>
+            <Link onPress={() => go('AuxSignup')}>Sou auxiliar: criar conta</Link>
           </View>
         </View>
 

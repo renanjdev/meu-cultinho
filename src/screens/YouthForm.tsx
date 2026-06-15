@@ -58,7 +58,7 @@ export default function YouthForm() {
       const uri = await pickImage();
       if (uri) setPhoto({ uri, isNew: true });
     } catch {
-      show('Erro ao selecionar a foto');
+      show('Erro ao selecionar a foto', 'error');
     }
   };
   const trimmedName = f.name?.trim() ?? '';
@@ -126,7 +126,7 @@ export default function YouthForm() {
       else go('YouthList');
     } catch (e) {
       console.error('[salvar jovem]', e);
-      show('Não foi possível salvar. Tente de novo.');
+      show('Não foi possível salvar. Tente de novo.', 'error');
     } finally {
       setSaving(false);
     }
@@ -207,7 +207,12 @@ export default function YouthForm() {
         <Field label="Endereço" placeholder="Rua, número, bairro" value={f.address} onChangeText={set('address')} icon={<IconMapPin size={17} />} />
 
         <FieldSection icon={<IconLayers size={16} />}>Grupo e observações</FieldSection>
-        <SelectField label="Grupo" value={f.group} onChange={set('group')} options={grupoOptions} />
+        <SelectField
+          label="Grupo"
+          value={f.group}
+          onChange={set('group')}
+          options={[{ value: '', label: 'Sem grupo' }, ...grupoOptions]}
+        />
         <TextArea label="Observações" placeholder="Anotações sobre o jovem..." value={f.notes} onChangeText={set('notes')} />
         <Segmented label="Status" value={f.status} options={['Ativo', 'Inativo']} onChange={set('status')} />
 

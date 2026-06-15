@@ -415,7 +415,8 @@ export function Button({
   const t = useTheme();
   const variants: Record<ButtonVariant, { bg: string; fg: string }> = {
     primary: { bg: t.primary, fg: t.onPrimary },
-    secondary: { bg: t.primarySoft, fg: t.primary },
+    // primaryDeep (não primary) p/ passar AA sobre o primarySoft (5.65:1)
+    secondary: { bg: t.primarySoft, fg: t.primaryDeep },
     ghost: { bg: 'transparent', fg: t.inkSoft },
     'danger-soft': { bg: t.absentSoft, fg: t.absentDeep },
   };
@@ -525,7 +526,7 @@ export function Field({
           value={value ?? ''}
           onChangeText={handleChange}
           placeholder={placeholder}
-          placeholderTextColor={t.inkSoft}
+          placeholderTextColor={t.inkFaint}
           secureTextEntry={secureTextEntry}
           keyboardType={dateMask ? 'number-pad' : keyboardType}
           maxLength={dateMask ? 10 : undefined}
@@ -553,7 +554,7 @@ export function Field({
         <Txt
           weight="semibold"
           size={12}
-          color={t.absent}
+          color={t.absentDeep}
           nativeID={errId}
           accessibilityLiveRegion="polite">
           {error}
@@ -703,7 +704,9 @@ export function SelectField({
   const t = useTheme();
   const [open, setOpen] = useState(false);
   const current = options.find((o) => o.value === value);
-  const currentLabel = current?.label ?? options[0]?.label ?? 'Selecione...';
+  // sem match (ex.: value vazio sem opção vazia) NÃO cai no 1º item — senão o
+  // campo parece já ter algo selecionado quando na verdade está vazio.
+  const currentLabel = current?.label ?? 'Selecione...';
   return (
     <View style={{ gap: t.space.sm }}>
       {label ? (
@@ -906,10 +909,11 @@ export function GroupIcon({
   tone?: 'primary' | 'gold' | 'present';
 }) {
   const t = useTheme();
+  // tom *Deep no ícone p/ passar o piso de 3:1 (1.4.11) sobre o fundo soft
   const tones: Record<string, [string, string]> = {
-    primary: [t.primarySoft, t.primary],
-    gold: [t.goldSoft, t.gold],
-    present: [t.presentSoft, t.present],
+    primary: [t.primarySoft, t.primaryDeep],
+    gold: [t.goldSoft, t.goldDeep],
+    present: [t.presentSoft, t.presentDeep],
   };
   const [bg, fg] = tones[tone] ?? tones.primary;
   const I: IconComponent =
@@ -945,11 +949,12 @@ export function StatTile({
   style?: StyleProp<ViewStyle>;
 }) {
   const t = useTheme();
+  // ícone em tom *Deep p/ legibilidade sobre o fundo soft (>=4.7:1)
   const tones: Record<StatTone, [string, string]> = {
-    primary: [t.primarySoft, t.primary],
-    present: [t.presentSoft, t.present],
-    absent: [t.absentSoft, t.absent],
-    gold: [t.goldSoft, t.gold],
+    primary: [t.primarySoft, t.primaryDeep],
+    present: [t.presentSoft, t.presentDeep],
+    absent: [t.absentSoft, t.absentDeep],
+    gold: [t.goldSoft, t.goldDeep],
   };
   const [bg, fg] = tones[tone];
   return (
@@ -1320,7 +1325,7 @@ export function Link({ children, onPress }: { children: ReactNode; onPress?: () 
       accessibilityRole="button"
       hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
       style={({ pressed }) => [{ paddingVertical: 8, paddingHorizontal: 2 }, pressed && { opacity: 0.6 }]}>
-      <Txt weight="bold" size={13.5} color={t.primary}>
+      <Txt weight="bold" size={13.5} color={t.primaryDeep}>
         {children}
       </Txt>
     </Pressable>

@@ -5,7 +5,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useSession } from '../state/session';
 import { useNav } from '../navigation/useNav';
 import { useToast } from '../components/Toast';
-import { useGrupos } from '../data/repo';
+import { useMyGrupos } from '../data/repo';
 import {
   Avatar,
   BottomNav,
@@ -39,8 +39,8 @@ export default function AuxHome() {
   const { show } = useToast();
   const firstName = session?.name?.split(' ')[0] ?? 'Auxiliar';
 
-  const { grupos } = useGrupos();
-  const myGroups = grupos.slice(0, 2); // placeholder: auxiliar's assigned groups
+  // grupos sob responsabilidade do auxiliar logado (grupos.aux_id)
+  const { grupos: myGroups } = useMyGrupos(session?.userId);
 
   return (
     <Screen>
@@ -65,7 +65,7 @@ export default function AuxHome() {
             Seus grupos sob responsabilidade
           </Txt>
         </View>
-        <IconButton soft accessibilityLabel="Notificações" onPress={() => show('Em breve')}>
+        <IconButton soft accessibilityLabel="Notificações" onPress={() => show('Em breve', 'info')}>
           <IconBell size={21} color={t.primary} />
         </IconButton>
       </View>
@@ -183,6 +183,14 @@ export default function AuxHome() {
 
         <SectionLabel>Meus grupos</SectionLabel>
         <View style={{ gap: 12 }}>
+          {myGroups.length === 0 ? (
+            <Card pad>
+              <Txt weight="semibold" size={13.5} color={t.inkSoft} style={{ textAlign: 'center', lineHeight: 20 }}>
+                Você ainda não tem grupos sob sua responsabilidade. Peça ao cooperador para te
+                vincular a um grupo.
+              </Txt>
+            </Card>
+          ) : null}
           {myGroups.map((g) => (
             <Card key={g.id} pad>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>

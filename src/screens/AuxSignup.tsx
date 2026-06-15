@@ -7,7 +7,7 @@ import { Platform, ScrollView, View } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useSession } from '../state/session';
 import { useNav } from '../navigation/useNav';
-import { Button, Field, LogoMark, Screen, Segmented, Txt } from '../components/ui';
+import { Button, Field, FieldSection, LogoMark, Screen, Segmented, Txt } from '../components/ui';
 import { IconCalendar, IconCheck, IconLock, IconUser } from '../components/Icons';
 import { validateDateBR } from '../data/date';
 
@@ -80,7 +80,7 @@ export default function AuxSignup() {
             : msg.includes('USUARIO_INVALIDO')
               ? 'Usuário inválido. Use letras e números (ex: lucas.souza).'
               : msg.includes('PERFIL_NAO_CARREGOU') || msg.includes('SESSAO_PERDIDA')
-                ? 'Conta criada! Houve um erro ao entrar — atualize a página e faça login.'
+                ? 'Conta criada! Houve um erro ao entrar. Atualize a página e faça login.'
                 : msg.toLowerCase().includes('password')
                   ? 'Senha muito curta (mínimo 6 caracteres).'
                   : 'Não foi possível criar a conta. Tente de novo.',
@@ -106,14 +106,16 @@ export default function AuxSignup() {
         </View>
 
         <View style={{ gap: 12 }}>
+          <FieldSection>Convite</FieldSection>
           <Field
             label="Código de convite"
             required
             value={code}
             onChangeText={(v) => setCode(v.toUpperCase())}
-            placeholder="Ex: A1B2C3"
+            placeholder="Ex: 9F3A7C21"
             error={tried && !codeOk ? 'Informe o código' : undefined}
           />
+          <FieldSection icon={<IconUser size={16} />}>Seus dados</FieldSection>
           <Field
             label="Seu nome completo"
             required
@@ -130,7 +132,7 @@ export default function AuxSignup() {
             placeholder="ex: lucas.souza"
             icon={<IconUser size={19} />}
             autoComplete="username"
-            error={tried && !userOk ? 'Mínimo 3 caracteres (letras e números)' : undefined}
+            error={tried && !userOk ? 'Use 3+ caracteres, comece com letra ou número (pode usar . _ -)' : undefined}
           />
           <Field
             label="Data de nascimento"
@@ -142,6 +144,7 @@ export default function AuxSignup() {
             icon={<IconCalendar size={19} />}
             error={(tried || birth.length >= 10) && !birthOk ? birthErr : undefined}
           />
+          <FieldSection icon={<IconCalendar size={16} />}>Dados da igreja (opcional)</FieldSection>
           <Field
             label="Data de batismo"
             dateMask
@@ -166,6 +169,7 @@ export default function AuxSignup() {
             icon={<IconCalendar size={19} />}
             error={(tried || presented.length >= 10) && presentedErr ? presentedErr : undefined}
           />
+          <FieldSection icon={<IconLock size={16} />}>Acesso</FieldSection>
           <Field
             label="Senha"
             required
@@ -190,7 +194,7 @@ export default function AuxSignup() {
           />
 
           {erro ? (
-            <Txt weight="semibold" size={13} color={t.absent}>
+            <Txt weight="semibold" size={13} color={t.absentDeep}>
               {erro}
             </Txt>
           ) : null}

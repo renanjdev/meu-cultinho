@@ -6,8 +6,10 @@
  */
 const CACHE = 'cultinho-v2';
 
-self.addEventListener('install', () => {
-  // sem skipWaiting: a nova versão aguarda a confirmação do usuário
+self.addEventListener('install', (event) => {
+  // sem skipWaiting: a nova versão aguarda a confirmação do usuário.
+  // precache da casca '/' p/ o fallback offline ter conteúdo já no 1º acesso.
+  event.waitUntil(caches.open(CACHE).then((c) => c.add('/').catch(() => {})));
 });
 
 self.addEventListener('message', (event) => {
@@ -34,8 +36,11 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(request)
       .then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {});
+        // só cacheia resposta boa: evita gravar 404/5xx e servi-los offline
+        if (res && res.ok && res.status === 200) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {});
+        }
         return res;
       })
       .catch(() => caches.match(request).then((cached) => cached || caches.match('/'))),

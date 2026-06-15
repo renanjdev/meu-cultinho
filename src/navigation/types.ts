@@ -13,14 +13,14 @@ export type RootStackParamList = {
   AuxSignup: undefined;
   AdminHome: undefined;
   AuxHome: undefined;
-  YouthList: undefined;
+  YouthList: { group?: string } | undefined;
   YouthForm: { id?: string } | undefined;
   YouthDetail: { id: string };
   AuxList: undefined;
   AuxForm: undefined;
   InviteAux: undefined;
   GroupList: undefined;
-  GroupForm: undefined;
+  GroupForm: { id?: string } | undefined;
   Attendance: { group?: string } | undefined;
   History: undefined;
   Reports: undefined;

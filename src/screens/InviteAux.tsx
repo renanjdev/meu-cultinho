@@ -15,7 +15,7 @@ export default function InviteAux() {
   const t = useTheme();
   const { back } = useNav();
   const { show } = useToast();
-  const { code, reload } = useInviteCode();
+  const { code, loading, reload } = useInviteCode();
   const [busy, setBusy] = useState(false);
 
   const origin =
@@ -25,16 +25,19 @@ export default function InviteAux() {
   const link = code ? `${origin}/?aux=${code}` : '';
 
   const copy = async (text: string, what: string) => {
-    if (!text) return;
+    if (!text) {
+      show('Aguarde o código carregar.', 'info');
+      return;
+    }
     try {
       if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
         await navigator.clipboard.writeText(text);
         show(`${what} copiado`);
       } else {
-        show('Selecione e copie manualmente');
+        show('Selecione e copie manualmente', 'info');
       }
     } catch {
-      show('Não foi possível copiar');
+      show('Não foi possível copiar', 'error');
     }
   };
 
@@ -45,7 +48,7 @@ export default function InviteAux() {
       await reload();
       show('Novo código gerado');
     } catch {
-      show('Erro ao gerar o código');
+      show('Erro ao gerar o código', 'error');
     } finally {
       setBusy(false);
     }
@@ -84,19 +87,25 @@ export default function InviteAux() {
             <Txt weight="semibold" size={11.5} color={t.primaryDeep} style={{ textTransform: 'uppercase', letterSpacing: 0.8 }}>
               Código de convite
             </Txt>
-            <Txt weight="extrabold" size={30} color={t.primary} style={{ letterSpacing: 6 }}>
-              {code || '—'}
+            <Txt weight="extrabold" size={30} color={t.primaryDeep} style={{ letterSpacing: 6 }}>
+              {loading ? '…' : code || '—'}
             </Txt>
           </View>
 
-          <Txt selectable weight="semibold" size={12.5} color={t.inkSoft} style={{ textAlign: 'center' }}>
-            {link || '—'}
-          </Txt>
+          {!loading && !code ? (
+            <Txt weight="semibold" size={12.5} color={t.inkSoft} style={{ textAlign: 'center' }}>
+              Código indisponível para este perfil (apenas o cooperador vê o convite).
+            </Txt>
+          ) : (
+            <Txt selectable weight="semibold" size={12.5} color={t.inkSoft} style={{ textAlign: 'center' }}>
+              {link || '…'}
+            </Txt>
+          )}
 
-          <Button variant="primary" onPress={() => copy(link, 'Link')}>
+          <Button variant="primary" disabled={!code} onPress={() => copy(link, 'Link')}>
             Copiar link
           </Button>
-          <Button variant="secondary" onPress={() => copy(code, 'Código')}>
+          <Button variant="secondary" disabled={!code} onPress={() => copy(code, 'Código')}>
             Copiar só o código
           </Button>
         </Card>

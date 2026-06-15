@@ -141,13 +141,21 @@ export default function CalendarScreen() {
                   const isToday = cell.iso === today;
                   const isSel = cell.iso === selected;
                   const hasBday = cell.current && bdayDays.has(cell.day);
-                  const hasEvent = evIso.has(cell.iso);
+                  // mesma regra do aniversário: não pinta evento em dia de outro mês
+                  const hasEvent = cell.current && evIso.has(cell.iso);
+                  const [, cm, cd] = cell.iso.split('-').map(Number);
+                  const dayA11y =
+                    `${cd} de ${MONTHS_FULL_PT[cm - 1]}` +
+                    (hasBday ? ', aniversário' : '') +
+                    (hasEvent ? ', evento' : '');
                   return (
                     <Pressable
                       key={cell.iso}
                       onPress={() => setSelected(cell.iso)}
                       accessibilityRole="button"
+                      accessibilityLabel={dayA11y}
                       accessibilityState={{ selected: isSel }}
+                      hitSlop={{ top: 4, bottom: 4 }}
                       style={({ pressed }) => [
                         {
                           flex: 1,

@@ -28,6 +28,8 @@ export interface Jovem {
   name: string;
   birth: string;
   age: number;
+  /** false quando não há data de nascimento (não mostrar "0 anos"). */
+  hasAge: boolean;
   sex: 'Masculino' | 'Feminino' | null;
   batizado: boolean;
   batismo: string;
@@ -101,6 +103,117 @@ export function useGrupoOptions() {
   return options;
 }
 
+export interface GrupoInput {
+  id?: string;
+  name: string;
+  short?: string;
+  description?: string;
+  icon?: GroupIcon;
+  status?: string;
+  auxId?: string | null;
+}
+
+/** Cria/atualiza um grupo e devolve o id. */
+export async function saveGrupo(input: GrupoInput): Promise<string> {
+  const row = {
+    name: input.name.trim(),
+    short: input.short?.trim() || null,
+    description: input.description?.trim() || null,
+    icon: input.icon || 'users',
+    status: input.status || 'Ativo',
+    aux_id: input.auxId || null,
+  };
+  if (input.id) {
+    const { error } = await supabase.from('grupos').update(row).eq('id', input.id);
+    if (error) throw error;
+    return input.id;
+  }
+  const { data, error } = await supabase.from('grupos').insert(row).select('id').single();
+  if (error) throw error;
+  return data.id as string;
+}
+
+export async function deleteGrupo(id: string): Promise<void> {
+  const { error } = await supabase.from('grupos').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export interface GrupoDetail {
+  id: string;
+  name: string;
+  short: string;
+  description: string;
+  icon: GroupIcon;
+  status: Status;
+  auxId: string | null;
+}
+export function useGrupo(id: string | undefined) {
+  const [grupo, setGrupo] = useState<GrupoDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const reload = useCallback(async () => {
+    if (!id) {
+      setGrupo(null);
+      setLoading(false);
+      return;
+    }
+    const { data } = await supabase
+      .from('grupos')
+      .select('id, name, short, description, icon, status, aux_id')
+      .eq('id', id)
+      .maybeSingle();
+    setGrupo(
+      data
+        ? {
+            id: data.id,
+            name: data.name,
+            short: data.short ?? '',
+            description: data.description ?? '',
+            icon: data.icon,
+            status: data.status,
+            auxId: data.aux_id ?? null,
+          }
+        : null,
+    );
+    setLoading(false);
+  }, [id]);
+  useFocusEffect(useCallback(() => void reload(), [reload]));
+  return { grupo, loading, reload };
+}
+
+/** Grupos sob responsabilidade de um auxiliar (grupos.aux_id). */
+export function useMyGrupos(auxId: string | undefined) {
+  const [grupos, setGrupos] = useState<Grupo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const reload = useCallback(async () => {
+    if (!auxId) {
+      setGrupos([]);
+      setLoading(false);
+      return;
+    }
+    const { data } = await supabase
+      .from('grupos')
+      .select('id, name, short, icon, status, jovens(count)')
+      .eq('aux_id', auxId)
+      .order('name');
+    setGrupos(
+      (data ?? []).map(
+        (g: any): Grupo => ({
+          id: g.id,
+          name: g.name,
+          short: g.short ?? g.name,
+          icon: g.icon,
+          status: g.status,
+          auxName: '',
+          count: g.jovens?.[0]?.count ?? 0,
+        }),
+      ),
+    );
+    setLoading(false);
+  }, [auxId]);
+  useFocusEffect(useCallback(() => void reload(), [reload]));
+  return { grupos, loading, reload };
+}
+
 /* ------------------------------------------------------------------ Jovens */
 const JOVEM_SELECT =
   'id, name, birth, sex, batizado, batismo, status, grupo_id, father, mother, phone, address, notes, photo_url, grupos(name, short)';
@@ -111,6 +224,7 @@ function mapJovem(j: any): Jovem {
     name: j.name,
     birth: j.birth ?? '',
     age: j.birth ? ageFrom(j.birth) : 0,
+    hasAge: !!j.birth,
     sex: j.sex,
     batizado: j.batizado ?? false,
     batismo: j.batismo ?? '',
@@ -158,11 +272,48 @@ export function useJovem(id: string | undefined) {
       return;
     }
     const { data } = await supabase.from('jovens').select(JOVEM_SELECT).eq('id', id).maybeSingle();
-    setJovem(data ? mapJovem(data) : null);
+    if (!data) {
+      setJovem(null);
+      setLoading(false);
+      return;
+    }
+    // esta ficha também é uma conta de auxiliar? (p/ avisar antes de excluir)
+    const { count } = await supabase
+      .from('auxiliares')
+      .select('id', { count: 'exact', head: true })
+      .eq('jovem_id', id);
+    setJovem({ ...mapJovem(data), linkedAux: (count ?? 0) > 0 });
     setLoading(false);
   }, [id]);
   useFocusEffect(useCallback(() => void reload(), [reload]));
   return { jovem, loading, reload };
+}
+
+/** Presença agregada de UM jovem (para a ficha): presentes, faltas, frequência. */
+export interface JovemStats {
+  present: number;
+  absent: number;
+  freq: number;
+  hasData: boolean;
+}
+export function useJovemStats(id: string | undefined) {
+  const [stats, setStats] = useState<JovemStats>({ present: 0, absent: 0, freq: 0, hasData: false });
+  const [loading, setLoading] = useState(true);
+  const reload = useCallback(async () => {
+    if (!id) {
+      setStats({ present: 0, absent: 0, freq: 0, hasData: false });
+      setLoading(false);
+      return;
+    }
+    const { data } = await supabase.from('presencas').select('status').eq('jovem_id', id);
+    const rows = (data ?? []) as { status: string }[];
+    const present = rows.filter((r) => r.status === 'present').length;
+    const absent = rows.filter((r) => r.status === 'absent').length;
+    setStats({ present, absent, freq: pct(present, absent), hasData: rows.length > 0 });
+    setLoading(false);
+  }, [id]);
+  useFocusEffect(useCallback(() => void reload(), [reload]));
+  return { stats, loading, reload };
 }
 
 export interface JovemInput {
@@ -361,7 +512,10 @@ const pct = (p: number, a: number) => (p + a ? Math.round((p / (p + a)) * 100) :
 export interface RankItem {
   id: string;
   name: string;
+  /** % exibido no card: presença (topPresent) ou falta (topAbsent). */
   pct: number;
+  present: number;
+  absent: number;
 }
 export interface GroupFreq {
   id: string;
@@ -428,9 +582,28 @@ export function useReports() {
       id,
       name: y.name,
       pct: pct(y.p, y.a),
+      present: y.p,
+      absent: y.a,
     }));
-    const topPresent = [...ranked].sort((a, b) => b.pct - a.pct).slice(0, 3);
-    const topAbsent = [...ranked].sort((a, b) => a.pct - b.pct).slice(0, 3);
+    // piso de amostra (>=2 reuniões quando já houver várias) p/ 1 marca não
+    // dominar o pódio; desempate por volume de marcações.
+    const minN = dates.size >= 2 ? 2 : 1;
+    const eligible = ranked.filter((r) => r.present + r.absent >= minN);
+    const base = eligible.length ? eligible : ranked;
+    const vol = (r: RankItem) => r.present + r.absent;
+    const topPresent = base
+      .filter((r) => r.present > 0)
+      .slice()
+      .sort((a, b) => b.pct - a.pct || vol(b) - vol(a))
+      .slice(0, 3);
+    const chosen = new Set(topPresent.map((r) => r.id));
+    // "Mais ausentes": só quem REALMENTE faltou, sem repetir quem já está em
+    // "mais frequentes", e o % mostrado é a taxa de FALTA (bate com o título).
+    const topAbsent = base
+      .filter((r) => r.absent > 0 && !chosen.has(r.id))
+      .map((r) => ({ ...r, pct: Math.round((r.absent / (r.present + r.absent)) * 100) }))
+      .sort((a, b) => b.pct - a.pct || vol(b) - vol(a))
+      .slice(0, 3);
 
     setData({
       avgFreq: pct(totalPresent, totalAbsent),
@@ -446,6 +619,22 @@ export function useReports() {
   }, []);
   useFocusEffect(useCallback(() => void reload(), [reload]));
   return { data, loading, reload };
+}
+
+/** Data da reunião mais recente (em presencas), como "02 jun" — ou '' se nenhuma. */
+export function useLastMeeting() {
+  const [label, setLabel] = useState('');
+  const reload = useCallback(async () => {
+    const { data } = await supabase
+      .from('presencas')
+      .select('data')
+      .order('data', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setLabel(data?.data ? isoDayMonth(data.data) : '');
+  }, []);
+  useFocusEffect(useCallback(() => void reload(), [reload]));
+  return label;
 }
 
 /* ------------------------------------------------------------- Histórico */
@@ -629,13 +818,13 @@ export function useInviteCode() {
   return { code, loading, reload };
 }
 
-/** Gera um novo código (6 chars legíveis, sem 0/O/1/I) e grava na config. */
+/**
+ * Gera um novo código de convite NO SERVIDOR (RPC admin-only, fonte
+ * criptográfica gen_random_bytes) e retorna. O cliente não gera mais o código
+ * (Math.random é previsível) nem grava direto na congregacao.
+ */
 export async function regenerateInviteCode(): Promise<string> {
-  const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let c = '';
-  // 8 chars de um alfabeto de 31 ≈ 8.5e11 combinações (inviável de adivinhar)
-  for (let i = 0; i < 8; i++) c += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
-  const { error } = await supabase.from('congregacao').update({ aux_invite_code: c }).eq('id', 1);
+  const { data, error } = await supabase.rpc('rotate_aux_invite_code');
   if (error) throw error;
-  return c;
+  return (data as string | null) ?? '';
 }
