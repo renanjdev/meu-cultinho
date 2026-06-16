@@ -58,6 +58,37 @@ export interface Auxiliar {
   photoUrl: string;
 }
 
+/* ------------------------------------------------------------ Congregação */
+export interface Congregacao {
+  name: string;
+}
+
+/** Lê a congregação (singleton id=1). Read liberado a qualquer autenticado. */
+export function useCongregacao() {
+  const [congregacao, setCongregacao] = useState<Congregacao | null>(null);
+  const [loading, setLoading] = useState(true);
+  const reload = useCallback(async () => {
+    const { data } = await supabase
+      .from('congregacao')
+      .select('name')
+      .eq('id', 1)
+      .maybeSingle();
+    setCongregacao(data ? { name: data.name } : null);
+    setLoading(false);
+  }, []);
+  useFocusEffect(useCallback(() => void reload(), [reload]));
+  return { congregacao, loading, reload };
+}
+
+/** Atualiza o nome da congregação. RLS "admin write": só o cooperador grava. */
+export async function updateCongregacao(name: string): Promise<void> {
+  const { error } = await supabase
+    .from('congregacao')
+    .update({ name: name.trim() })
+    .eq('id', 1);
+  if (error) throw error;
+}
+
 /* ----------------------------------------------------------------- Grupos */
 export function useGrupos() {
   const [grupos, setGrupos] = useState<Grupo[]>([]);

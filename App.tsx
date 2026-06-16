@@ -42,6 +42,7 @@ import CalendarScreen from './src/screens/CalendarScreen';
 import EventForm from './src/screens/EventForm';
 import InviteAux from './src/screens/InviteAux';
 import Settings from './src/screens/Settings';
+import CongregForm from './src/screens/CongregForm';
 import InstallGate from './src/screens/InstallGate';
 
 // Anel de foco de teclado (web). `:focus-visible` só dispara na navegação por
@@ -150,6 +151,7 @@ function appScreens() {
       <Stack.Screen name="Calendar" component={CalendarScreen} />
       <Stack.Screen name="EventForm" component={EventForm} />
       <Stack.Screen name="Settings" component={Settings} />
+      <Stack.Screen name="CongregForm" component={CongregForm} />
     </>
   );
 }

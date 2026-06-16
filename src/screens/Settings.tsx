@@ -6,7 +6,7 @@ import { useSession } from '../state/session';
 import { useNav } from '../navigation/useNav';
 import { useToast } from '../components/Toast';
 import { pickAndUploadPhoto } from '../data/photos';
-import { updatePhotoUrl, useGrupos, useAuxiliares } from '../data/repo';
+import { updatePhotoUrl, useGrupos, useAuxiliares, useCongregacao } from '../data/repo';
 import {
   AppBar,
   Avatar,
@@ -49,6 +49,7 @@ export default function Settings() {
   const [photoBusy, setPhotoBusy] = useState(false);
   const { grupos } = useGrupos();
   const { auxiliares } = useAuxiliares();
+  const { congregacao } = useCongregacao();
   const numAux = auxiliares.filter((a) => a.role === 'auxiliar').length;
 
   const changePhoto = async () => {
@@ -168,7 +169,7 @@ export default function Settings() {
 
         <SectionLabel>Congregação</SectionLabel>
         <Card style={{ paddingHorizontal: 16, paddingVertical: 4 }}>
-          <Item Icon={IconBook} label="Dados da congregação" value="Central" />
+          <Item Icon={IconBook} label="Dados da congregação" value={congregacao?.name ?? '—'} onPress={() => go('CongregForm')} />
           <Item Icon={IconLayers} label="Grupos" value={String(grupos.length)} onPress={() => go('GroupList')} />
           <Item Icon={IconUser} label="Auxiliares" value={String(numAux)} onPress={() => go('AuxList')} />
         </Card>

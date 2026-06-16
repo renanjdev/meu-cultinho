@@ -27,6 +27,7 @@ export type RootStackParamList = {
   Calendar: undefined;
   EventForm: { id?: string; date?: string } | undefined;
   Settings: undefined;
+  CongregForm: undefined;
 };
 
 export type RouteName = keyof RootStackParamList;
