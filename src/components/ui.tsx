@@ -192,33 +192,102 @@ export function CardRow({
 }
 
 /* ------------------------------------------------------------------- Avatar */
+/** Visualizador de foto em tela cheia. Toque (na foto, no fundo ou no X) fecha. */
+function PhotoViewer({
+  visible,
+  url,
+  name,
+  onClose,
+}: {
+  visible: boolean;
+  url: string;
+  name?: string;
+  onClose: () => void;
+}) {
+  const insets = useSafeAreaInsets();
+  if (!visible) return null;
+  return (
+    <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.93)' }}>
+        <Pressable
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Fechar foto"
+          style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <Image
+            source={{ uri: url }}
+            resizeMode="contain"
+            accessibilityLabel={name ? `Foto de ${name}` : 'Foto'}
+            style={{ width: '100%', height: '100%' }}
+          />
+        </Pressable>
+        <Pressable
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Fechar"
+          hitSlop={10}
+          style={{
+            position: 'absolute',
+            top: insets.top + 10,
+            right: 16,
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: 'rgba(255,255,255,0.16)',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+          <IconX size={22} color="#fff" />
+        </Pressable>
+      </View>
+    </Modal>
+  );
+}
+
 export function Avatar({
   name,
   size = 44,
   color,
   photoUrl,
+  enlargeable,
 }: {
   name: string;
   size?: number;
   color?: string;
   photoUrl?: string;
+  /** toque abre a foto em tela cheia (só quando há photoUrl). */
+  enlargeable?: boolean;
 }) {
   const t = useTheme();
-  // Decorative: the person's name is always shown next to the avatar, so the
-  // initials/photo add only noise to the accessibility tree.
+  const [open, setOpen] = useState(false);
+  // Decorative por padrão: o nome aparece ao lado, então a imagem/iniciais só
+  // somam ruído na árvore de acessibilidade.
   const a11y = {
     accessibilityElementsHidden: true,
     importantForAccessibility: 'no-hide-descendants' as const,
   };
-  if (photoUrl) {
+  const imgStyle = {
+    width: size,
+    height: size,
+    borderRadius: size / 2,
+    backgroundColor: t.surface2,
+  };
+
+  if (photoUrl && enlargeable) {
     return (
-      <Image
-        {...a11y}
-        source={{ uri: photoUrl }}
-        resizeMode="cover"
-        style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: t.surface2 }}
-      />
+      <>
+        <Pressable
+          onPress={() => setOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel={`Ver foto de ${name}`}>
+          <Image source={{ uri: photoUrl }} resizeMode="cover" style={imgStyle} />
+        </Pressable>
+        <PhotoViewer visible={open} url={photoUrl} name={name} onClose={() => setOpen(false)} />
+      </>
     );
+  }
+  if (photoUrl) {
+    return <Image {...a11y} source={{ uri: photoUrl }} resizeMode="cover" style={imgStyle} />;
   }
   return (
     <View
