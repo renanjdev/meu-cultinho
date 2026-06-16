@@ -119,11 +119,11 @@ export default function AuxSignup() {
           />
           <FieldSection icon={<IconUser size={16} />}>Seus dados</FieldSection>
           <Field
-            label="Seu nome completo"
+            label="Nome ou apelido"
             required
             value={name}
             onChangeText={setName}
-            placeholder="Ex: Lucas Souza"
+            placeholder="Ex: Lucas (ou como te chamam)"
             error={tried && !nameOk ? 'Informe seu nome' : undefined}
           />
           <Field
