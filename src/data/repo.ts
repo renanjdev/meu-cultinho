@@ -507,7 +507,7 @@ export function useMarks(date: string, grupoId: string | undefined) {
   const [marks, setMarks] = useState<Record<string, Mark>>({});
   const [loading, setLoading] = useState(true);
   const reload = useCallback(async () => {
-    if (!grupoId) {
+    if (!grupoId || !date) {
       setMarks({});
       setLoading(false);
       return;
