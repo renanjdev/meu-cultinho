@@ -975,6 +975,74 @@ export function FilterChips({
   );
 }
 
+/* ------------------------------------------------------------- Check chips */
+/** Multi-seleção em chips (ex.: auxiliares de um grupo). value = ids marcados. */
+export function CheckChips({
+  label,
+  options,
+  value,
+  onChange,
+  empty = 'Nada disponível.',
+}: {
+  label?: string;
+  options: Option[];
+  value: string[];
+  onChange: (v: string[]) => void;
+  empty?: string;
+}) {
+  const t = useTheme();
+  const toggle = (id: string) =>
+    onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id]);
+  return (
+    <View style={{ gap: t.space.sm }}>
+      {label ? (
+        <Txt weight="bold" size={13} color={t.inkSoft} numberOfLines={1}>
+          {label}
+        </Txt>
+      ) : null}
+      {options.length === 0 ? (
+        <Txt weight="semibold" size={13} color={t.inkSoft}>
+          {empty}
+        </Txt>
+      ) : (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {options.map((o) => {
+            const on = value.includes(o.value);
+            return (
+              <Pressable
+                key={o.value}
+                onPress={() => toggle(o.value)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: on }}
+                accessibilityLabel={o.label}
+                style={({ pressed }) => [
+                  {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                    minHeight: 40,
+                    paddingVertical: 8,
+                    paddingHorizontal: 13,
+                    borderRadius: 999,
+                    borderWidth: 1.5,
+                    borderColor: on ? t.primary : t.line,
+                    backgroundColor: on ? t.primarySoft : t.surface,
+                  },
+                  pressed && { opacity: 0.7 },
+                ]}>
+                {on ? <IconCheck size={15} color={t.primaryDeep} /> : null}
+                <Txt weight="bold" size={13.5} color={on ? t.primaryDeep : t.inkSoft}>
+                  {o.label}
+                </Txt>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+    </View>
+  );
+}
+
 /* -------------------------------------------------------------- Group icon */
 export function GroupIcon({
   icon,
