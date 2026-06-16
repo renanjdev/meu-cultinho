@@ -60,7 +60,11 @@ export interface Auxiliar {
 
 /* ------------------------------------------------------------ Congregação */
 export interface Congregacao {
+  /** Nome da comum (ex: "Central"). */
   name: string;
+  endereco: string;
+  cooperadorOficial: string;
+  cooperadorJovens: string;
 }
 
 /** Lê a congregação (singleton id=1). Read liberado a qualquer autenticado. */
@@ -70,22 +74,39 @@ export function useCongregacao() {
   const reload = useCallback(async () => {
     const { data } = await supabase
       .from('congregacao')
-      .select('name')
+      .select('name, endereco, cooperador_oficial, cooperador_jovens')
       .eq('id', 1)
       .maybeSingle();
-    setCongregacao(data ? { name: data.name } : null);
+    setCongregacao(
+      data
+        ? {
+            name: data.name,
+            endereco: data.endereco ?? '',
+            cooperadorOficial: data.cooperador_oficial ?? '',
+            cooperadorJovens: data.cooperador_jovens ?? '',
+          }
+        : null,
+    );
     setLoading(false);
   }, []);
   useFocusEffect(useCallback(() => void reload(), [reload]));
   return { congregacao, loading, reload };
 }
 
-/** Atualiza o nome da congregação. RLS "admin write": só o cooperador grava. */
-export async function updateCongregacao(name: string): Promise<void> {
-  const { error } = await supabase
-    .from('congregacao')
-    .update({ name: name.trim() })
-    .eq('id', 1);
+/** Atualiza os dados da comum. RLS "admin write": só o cooperador grava. */
+export async function updateCongregacao(fields: {
+  name?: string;
+  endereco?: string;
+  cooperadorOficial?: string;
+  cooperadorJovens?: string;
+}): Promise<void> {
+  const row: Record<string, unknown> = {};
+  if (fields.name !== undefined) row.name = fields.name.trim();
+  if (fields.endereco !== undefined) row.endereco = fields.endereco.trim() || null;
+  if (fields.cooperadorOficial !== undefined) row.cooperador_oficial = fields.cooperadorOficial.trim() || null;
+  if (fields.cooperadorJovens !== undefined) row.cooperador_jovens = fields.cooperadorJovens.trim() || null;
+  if (Object.keys(row).length === 0) return;
+  const { error } = await supabase.from('congregacao').update(row).eq('id', 1);
   if (error) throw error;
 }
 
