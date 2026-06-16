@@ -181,7 +181,8 @@ export function useGrupo(id: string | undefined) {
   return { grupo, loading, reload };
 }
 
-/** Grupos sob responsabilidade de um auxiliar (grupos.aux_id). */
+/** Grupos do auxiliar: onde ele é o responsável (grupos.aux_id) OU membro
+ *  (auxiliar_grupos). União sem repetir. */
 export function useMyGrupos(auxId: string | undefined) {
   const [grupos, setGrupos] = useState<Grupo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -191,14 +192,19 @@ export function useMyGrupos(auxId: string | undefined) {
       setLoading(false);
       return;
     }
-    const { data } = await supabase
-      .from('grupos')
-      .select('id, name, short, icon, status, jovens(count)')
-      .eq('aux_id', auxId)
-      .order('name');
-    setGrupos(
-      (data ?? []).map(
-        (g: any): Grupo => ({
+    const sel = 'id, name, short, icon, status, jovens(count)';
+    const [resp, memb] = await Promise.all([
+      supabase.from('grupos').select(sel).eq('aux_id', auxId),
+      supabase.from('auxiliar_grupos').select(`grupos(${sel})`).eq('auxiliar_id', auxId),
+    ]);
+    const byId = new Map<string, any>();
+    (resp.data ?? []).forEach((g: any) => byId.set(g.id, g));
+    (memb.data ?? []).forEach((r: any) => {
+      if (r.grupos) byId.set(r.grupos.id, r.grupos);
+    });
+    const out = Array.from(byId.values())
+      .map(
+        (g): Grupo => ({
           id: g.id,
           name: g.name,
           short: g.short ?? g.name,
@@ -207,12 +213,44 @@ export function useMyGrupos(auxId: string | undefined) {
           auxName: '',
           count: g.jovens?.[0]?.count ?? 0,
         }),
-      ),
-    );
+      )
+      .sort((a, b) => a.name.localeCompare(b.name));
+    setGrupos(out);
     setLoading(false);
   }, [auxId]);
   useFocusEffect(useCallback(() => void reload(), [reload]));
   return { grupos, loading, reload };
+}
+
+/** Ids dos auxiliares atribuídos a um grupo (N:N auxiliar_grupos). */
+export function useGrupoAuxiliares(grupoId: string | undefined) {
+  const [ids, setIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const reload = useCallback(async () => {
+    if (!grupoId) {
+      setIds([]);
+      setLoading(false);
+      return;
+    }
+    const { data } = await supabase
+      .from('auxiliar_grupos')
+      .select('auxiliar_id')
+      .eq('grupo_id', grupoId);
+    setIds((data ?? []).map((r: any) => r.auxiliar_id));
+    setLoading(false);
+  }, [grupoId]);
+  useFocusEffect(useCallback(() => void reload(), [reload]));
+  return { ids, loading, reload };
+}
+
+/** Substitui o conjunto de auxiliares de um grupo (apaga e regrava). Admin. */
+export async function setGrupoAuxiliares(grupoId: string, auxIds: string[]): Promise<void> {
+  const { error: delErr } = await supabase.from('auxiliar_grupos').delete().eq('grupo_id', grupoId);
+  if (delErr) throw delErr;
+  if (auxIds.length === 0) return;
+  const rows = auxIds.map((auxiliar_id) => ({ auxiliar_id, grupo_id: grupoId }));
+  const { error: insErr } = await supabase.from('auxiliar_grupos').insert(rows);
+  if (insErr) throw insErr;
 }
 
 /* ------------------------------------------------------------------ Jovens */
