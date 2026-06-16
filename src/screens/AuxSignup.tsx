@@ -8,7 +8,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useSession } from '../state/session';
 import { useNav } from '../navigation/useNav';
 import { Button, Field, FieldSection, LogoMark, Screen, Segmented, Txt } from '../components/ui';
-import { IconCalendar, IconCheck, IconLock, IconUser } from '../components/Icons';
+import { IconCalendar, IconCheck, IconLock, IconUser, IconWhats } from '../components/Icons';
 import { validateDateBR } from '../data/date';
 
 /** Lê o código do link (?aux=CODIGO) no navegador. */
@@ -29,6 +29,7 @@ export default function AuxSignup() {
   const [name, setName] = useState('');
   const [user, setUser] = useState('');
   const [birth, setBirth] = useState('');
+  const [phone, setPhone] = useState('');
   const [batismo, setBatismo] = useState('');
   const [selado, setSelado] = useState(false);
   const [presented, setPresented] = useState('');
@@ -68,6 +69,7 @@ export default function AuxSignup() {
         batismo: batismo.trim(),
         selado,
         presented: presented.trim(),
+        phone: phone.trim(),
       });
       // sucesso: o Gate troca para o app (Home do auxiliar) automaticamente
     } catch (e: unknown) {
@@ -117,11 +119,11 @@ export default function AuxSignup() {
           />
           <FieldSection icon={<IconUser size={16} />}>Seus dados</FieldSection>
           <Field
-            label="Seu nome completo"
+            label="Nome ou apelido"
             required
             value={name}
             onChangeText={setName}
-            placeholder="Ex: Lucas Souza"
+            placeholder="Ex: Lucas (ou como te chamam)"
             error={tried && !nameOk ? 'Informe seu nome' : undefined}
           />
           <Field
@@ -143,6 +145,14 @@ export default function AuxSignup() {
             placeholder="dd/mm/aaaa"
             icon={<IconCalendar size={19} />}
             error={(tried || birth.length >= 10) && !birthOk ? birthErr : undefined}
+          />
+          <Field
+            label="WhatsApp"
+            phoneMask
+            value={phone}
+            onChangeText={setPhone}
+            placeholder="(11) 99999-8888"
+            icon={<IconWhats size={19} />}
           />
           <FieldSection icon={<IconCalendar size={16} />}>Dados da igreja (opcional)</FieldSection>
           <Field

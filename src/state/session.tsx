@@ -47,6 +47,7 @@ interface SessionContextValue {
     batismo?: string;
     selado?: boolean;
     presented?: string;
+    phone?: string;
   }) => Promise<void>;
 }
 
@@ -158,6 +159,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       batismo,
       selado,
       presented,
+      phone,
     }: {
       code: string;
       name: string;
@@ -167,6 +169,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       batismo?: string;
       selado?: boolean;
       presented?: string;
+      phone?: string;
     }) => {
       const email = usernameToEmail(username);
       manualAuthInFlight.current = true;
@@ -206,6 +209,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           p_batismo: batismo ?? null,
           p_selado: selado ?? false,
           p_presented: presented ?? null,
+          p_phone: phone ?? null,
         });
         if (rErr) throw new Error(rErr.message);
         // 4) carrega o perfil e entra
