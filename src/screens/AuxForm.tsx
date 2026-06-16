@@ -13,13 +13,14 @@ import { useNav } from '../navigation/useNav';
 import { useSession } from '../state/session';
 import { useToast } from '../components/Toast';
 import { pickImage, uploadPhoto } from '../data/photos';
-import { useAuxiliar, useJovem, saveJovem, updateAuxiliar, updatePhotoUrl } from '../data/repo';
+import { useAuxiliar, useJovem, saveJovem, updateAuxiliar, updatePhotoUrl, deleteAuxiliar } from '../data/repo';
 import { validateDateBR } from '../data/date';
 import type { RootStackParamList } from '../navigation/types';
 import {
   AppBar,
   Avatar,
   Button,
+  ConfirmDialog,
   Field,
   FieldSection,
   Screen,
@@ -27,7 +28,7 @@ import {
   Segmented,
   Txt,
 } from '../components/ui';
-import { IconBook, IconCalendar, IconCheck, IconPlus, IconUser, IconWhats } from '../components/Icons';
+import { IconBook, IconCalendar, IconCheck, IconPlus, IconUser, IconWhats, IconX } from '../components/Icons';
 
 interface AuxDraft {
   name: string;
@@ -54,6 +55,8 @@ export default function AuxForm() {
   const isAdmin = session?.role === 'cooperador';
   const isSelf = id === session?.userId;
   const canEditStatus = isAdmin && !isSelf;
+  // excluir: só o cooperador, só auxiliar (não o próprio cooperador, não a si mesmo)
+  const canDelete = isAdmin && !isSelf && aux?.role === 'auxiliar';
 
   const [f, setF] = useState<AuxDraft>({
     name: '', phone: '', birth: '', batizado: 'Não', batismo: '', selado: false, presented: '', status: 'Ativo',
@@ -62,6 +65,8 @@ export default function AuxForm() {
   const [photo, setPhoto] = useState<{ uri: string; isNew: boolean } | null>(null);
   const [tried, setTried] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // semeia quando a conta (e a ficha de jovem vinculada) carregam — uma vez só
   useEffect(() => {
@@ -148,6 +153,26 @@ export default function AuxForm() {
       console.error('[salvar auxiliar]', e);
       show('Não foi possível salvar. Tente de novo.', 'error');
       setSaving(false);
+    }
+  };
+
+  const excluir = async () => {
+    if (!id) return;
+    setConfirmDel(false);
+    setDeleting(true);
+    try {
+      await deleteAuxiliar(id);
+      show('Auxiliar removido');
+      if (back) back();
+    } catch (e) {
+      const msg = String((e as { message?: string })?.message ?? '');
+      show(
+        msg.includes('NAO_PODE_EXCLUIR_SI')
+          ? 'Você não pode excluir a si mesmo.'
+          : 'Não foi possível excluir. Tente de novo.',
+        'error',
+      );
+      setDeleting(false);
     }
   };
 
@@ -273,7 +298,27 @@ export default function AuxForm() {
         <Button variant="ghost" onPress={back}>
           Cancelar
         </Button>
+        {canDelete ? (
+          <Button
+            variant="danger-soft"
+            icon={<IconX size={18} />}
+            loading={deleting}
+            style={{ marginTop: 4 }}
+            onPress={() => setConfirmDel(true)}>
+            Excluir auxiliar
+          </Button>
+        ) : null}
       </ScreenScroll>
+
+      <ConfirmDialog
+        open={confirmDel}
+        danger
+        title="Excluir auxiliar?"
+        message={`${aux?.name ?? 'Este auxiliar'} será removido por completo: login, dados de auxiliar e a ficha de jovem (com as presenças). Esta ação não pode ser desfeita.`}
+        confirmLabel="Excluir"
+        onCancel={() => setConfirmDel(false)}
+        onConfirm={excluir}
+      />
     </Screen>
   );
 }

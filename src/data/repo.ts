@@ -523,6 +523,13 @@ export async function updateAuxiliar(
   if (error) throw error;
 }
 
+/** Exclui um auxiliar por completo: conta de login + ficha de jovem + presenças.
+ *  Via RPC SECURITY DEFINER (admin-only, não exclui a si mesmo). */
+export async function deleteAuxiliar(id: string): Promise<void> {
+  const { error } = await supabase.rpc('delete_auxiliar', { p_id: id });
+  if (error) throw error;
+}
+
 /* --------------------------------------------------------------- Presenças */
 export type Mark = 'present' | 'absent';
 
