@@ -17,8 +17,10 @@ import {
   setMark,
   todayISO,
   isoToBR,
+  brToISO,
   type Mark,
 } from '../data/repo';
+import { validateDateBR } from '../data/date';
 import type { RootStackParamList } from '../navigation/types';
 import {
   AppBar,
@@ -44,7 +46,12 @@ export default function Attendance() {
   const { session } = useSession();
   const route = useRoute<RouteProp<RootStackParamList, 'Attendance'>>();
 
-  const dateISO = todayISO();
+  // Data EDITÁVEL (default hoje) para permitir lançamento retroativo. dateISO só
+  // é válido quando a data é uma dd/mm/aaaa real e não-futura.
+  const [dateBR, setDateBR] = useState(isoToBR(todayISO()));
+  const dateErr = dateBR.trim() ? validateDateBR(dateBR) : 'Informe a data';
+  const dateOk = !dateErr;
+  const dateISO = dateOk ? brToISO(dateBR) : '';
   const { grupos } = useGrupos();
   const { jovens } = useJovens();
   const [grp, setGrp] = useState(route.params?.group ?? '');
@@ -68,6 +75,10 @@ export default function Attendance() {
 
   // Toggle + persist. Tapping the active mark again clears it (deletes the row).
   const mark = async (id: string, v: Mark) => {
+    if (!dateOk) {
+      show('Informe uma data válida para registrar.', 'info');
+      return;
+    }
     const next: Mark | null = marks[id] === v ? null : v;
     setMarks((m) => {
       const c = { ...m };
@@ -89,7 +100,15 @@ export default function Attendance() {
 
       {/* controls */}
       <View style={{ paddingHorizontal: 16, paddingVertical: 12, backgroundColor: t.surface, borderBottomWidth: 1, borderBottomColor: t.line, gap: 12 }}>
-        <Field label="Data da reunião" value={isoToBR(dateISO)} editable={false} icon={<IconCalendar size={17} />} />
+        <Field
+          label="Data da reunião"
+          dateMask
+          value={dateBR}
+          onChangeText={setDateBR}
+          placeholder="dd/mm/aaaa"
+          icon={<IconCalendar size={17} />}
+          error={dateBR.length >= 10 && dateErr ? dateErr : undefined}
+        />
         <SelectField label="Grupo" value={grp} onChange={setGrp} options={grupos.map((g) => ({ value: g.id, label: g.name }))} />
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <SumPill num={roster.length} label="Total" tone="ink" />
@@ -98,7 +117,7 @@ export default function Attendance() {
           <SumPill num={pending} label="Pendentes" tone="gold" />
         </View>
         <Txt weight="semibold" size={12} color={t.inkSoft} style={{ textAlign: 'center' }}>
-          As marcações são salvas automaticamente.
+          Salvo automaticamente. Mude a data para lançar retroativo.
         </Txt>
       </View>
 
