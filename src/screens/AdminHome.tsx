@@ -91,7 +91,7 @@ export default function AdminHome() {
           borderBottomWidth: 1,
           borderBottomColor: t.line,
         }}>
-        <Avatar name={session?.name ?? 'Cooperador'} size={42} photoUrl={session?.photoUrl} />
+        <Avatar name={session?.name ?? 'Cooperador'} size={42} photoUrl={session?.photoUrl} enlargeable />
         <View style={{ flex: 1 }}>
           <Txt weight="bold" size={18} numberOfLines={1}>
             Olá, {firstName} 👋
