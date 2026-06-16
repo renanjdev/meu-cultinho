@@ -1086,12 +1086,15 @@ export function StatTile({
   icon,
   tone = 'primary',
   style,
+  onPress,
 }: {
   num: ReactNode;
   label: string;
   icon?: ReactElement<IconProps>;
   tone?: StatTone;
   style?: StyleProp<ViewStyle>;
+  /** quando definido, o tile vira botão (navega pra tela relacionada). */
+  onPress?: () => void;
 }) {
   const t = useTheme();
   // ícone em tom *Deep p/ legibilidade sobre o fundo soft (>=4.7:1)
@@ -1102,13 +1105,15 @@ export function StatTile({
     gold: [t.goldSoft, t.goldDeep],
   };
   const [bg, fg] = tones[tone];
-  return (
-    <View
-      style={[
-        { backgroundColor: t.surface, borderWidth: 1, borderColor: t.line, borderRadius: t.radiusCard, padding: t.space.md },
-        t.shadowCard,
-        style,
-      ]}>
+  const box = {
+    backgroundColor: t.surface,
+    borderWidth: 1,
+    borderColor: t.line,
+    borderRadius: t.radiusCard,
+    padding: t.space.md,
+  };
+  const content = (
+    <>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Txt weight="bold" style={{ fontSize: 26, lineHeight: 28 }}>
           {num}
@@ -1130,8 +1135,20 @@ export function StatTile({
       <Txt weight="semibold" size={12} color={t.inkSoft} style={{ marginTop: t.space.xs }}>
         {label}
       </Txt>
-    </View>
+    </>
   );
+  if (onPress) {
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        style={({ pressed }) => [box, t.shadowCard, style, pressed && { transform: [{ scale: 0.98 }] }]}>
+        {content}
+      </Pressable>
+    );
+  }
+  return <View style={[box, t.shadowCard, style]}>{content}</View>;
 }
 
 /* ---------------------------------------------------------- Progress bar */

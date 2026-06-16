@@ -41,6 +41,7 @@ interface SummaryItem {
   label: string;
   Icon: IconComponent;
   tone: StatTone;
+  to?: RouteName;
 }
 interface ActionItem {
   label: string;
@@ -71,10 +72,10 @@ export default function AdminHome() {
   const numAux = auxiliares.filter((a) => a.role === 'auxiliar').length;
 
   const SUMMARY: SummaryItem[] = [
-    { num: jovens.filter((j) => j.status === 'Ativo').length, label: 'Jovens ativos', Icon: IconUsers, tone: 'primary' },
-    { num: numAux, label: 'Auxiliares', Icon: IconUser, tone: 'gold' },
-    { num: grupos.length, label: 'Grupos', Icon: IconLayers, tone: 'present' },
-    { num: lastMeeting || '—', label: 'Última reunião', Icon: IconCheckCircle, tone: 'present' },
+    { num: jovens.filter((j) => j.status === 'Ativo').length, label: 'Jovens ativos', Icon: IconUsers, tone: 'primary', to: 'YouthList' },
+    { num: numAux, label: 'Auxiliares', Icon: IconUser, tone: 'gold', to: 'AuxList' },
+    { num: grupos.length, label: 'Grupos', Icon: IconLayers, tone: 'present', to: 'GroupList' },
+    { num: lastMeeting || '—', label: 'Última reunião', Icon: IconCheckCircle, tone: 'present', to: 'History' },
   ];
 
   return (
@@ -110,12 +111,12 @@ export default function AdminHome() {
         <View style={{ gap: 12 }}>
           <View style={{ flexDirection: 'row', gap: 12 }}>
             {SUMMARY.slice(0, 2).map((s) => (
-              <StatTile key={s.label} num={s.num} label={s.label} tone={s.tone} icon={<s.Icon size={18} />} style={{ flex: 1 }} />
+              <StatTile key={s.label} num={s.num} label={s.label} tone={s.tone} icon={<s.Icon size={18} />} style={{ flex: 1 }} onPress={s.to ? () => go(s.to!) : undefined} />
             ))}
           </View>
           <View style={{ flexDirection: 'row', gap: 12 }}>
             {SUMMARY.slice(2, 4).map((s) => (
-              <StatTile key={s.label} num={s.num} label={s.label} tone={s.tone} icon={<s.Icon size={18} />} style={{ flex: 1 }} />
+              <StatTile key={s.label} num={s.num} label={s.label} tone={s.tone} icon={<s.Icon size={18} />} style={{ flex: 1 }} onPress={s.to ? () => go(s.to!) : undefined} />
             ))}
           </View>
         </View>
